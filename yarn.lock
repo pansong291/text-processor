@@ -1954,6 +1954,11 @@ minimatch@^3.1.1:
   dependencies:
     brace-expansion "^1.1.7"
 
+monaco-editor@^0.43.0:
+  version "0.43.0"
+  resolved "https://registry.npmmirror.com/monaco-editor/-/monaco-editor-0.43.0.tgz#cb02a8d23d1249ad00b7cffe8bbecc2ac09d4baf"
+  integrity sha512-cnoqwQi/9fml2Szamv1XbSJieGJ1Dc8tENVMD26Kcfl7xGQWp7OBKMjlwKVGYFJ3/AXJjSOGvcqK7Ry/j9BM1Q==
+
 ms@2.1.2:
   version "2.1.2"
   resolved "https://registry.npmmirror.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"

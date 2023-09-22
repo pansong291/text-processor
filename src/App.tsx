@@ -10,7 +10,7 @@ const App: React.FC = () => {
     <ConfigProvider theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
       <AntdApp>
         <GlobalStyle dark={dark} />
-        <Content setDark={setDark} />
+        <Content dark={dark} setDark={setDark} />
       </AntdApp>
     </ConfigProvider>
   )
