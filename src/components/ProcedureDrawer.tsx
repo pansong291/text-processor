@@ -35,7 +35,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       style={{ transform: `translateX(-${openEditor ? 25 : 0}%)`, transition: 'transform .3s' }}
       push={false}
       headerStyle={{ padding: '8px 16px' }}
-      title={procedure.id}
+      title={<div className="monospace fw-normal">{procedure.id}</div>}
       open={props.open}
       onClose={() => props.onClose?.(procedure)}>
       <SortableList
@@ -90,7 +90,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         )}
       />
       <EditorDrawer
-        title={<div className="monospace">{`function ${fnConfig.id}(${props.global ? '' : 'value, index, array'})`}</div>}
+        title={<div className="monospace fw-normal">{`function ${fnConfig.id}(${props.global ? '' : 'value, index, array'})`}</div>}
         open={openEditor}
         code={fnCode}
         onClose={(code) => {

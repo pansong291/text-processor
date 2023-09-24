@@ -32,6 +32,7 @@ const SortableListItem: React.FC<SortableListItemProps> = ({ children, id, style
 }
 
 const ListItemContent = styled.div`
+  max-width: 75%;
   display: flex;
   gap: 16px;
 `

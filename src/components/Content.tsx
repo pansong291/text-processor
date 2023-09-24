@@ -34,7 +34,14 @@ const Content: React.FC<ContentProps> = () => {
           shape="circle"
           icon={<PlusOutlined />}
           onClick={() => {
-            updateList((p) => p.push({ id: randomIdentifier(), action: 'copy', operatorList: [{ id: randomIdentifier() }] }))
+            updateList((p) =>
+              p.push({
+                id: randomIdentifier(),
+                desc: '这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述',
+                action: 'copy',
+                operatorList: [{ id: randomIdentifier() }]
+              })
+            )
           }}
         />
         <Button type="default" shape="circle" icon={<SettingOutlined />} onClick={() => setOpenProcedure(true)} />
@@ -76,9 +83,11 @@ const Content: React.FC<ContentProps> = () => {
                 删除
               </Button>
             ]}>
-            <Typography.Text>{item.id}</Typography.Text>
-            <Typography.Text type="secondary" ellipsis={{ tooltip: true }}>
-              {item.desc}
+            <Typography.Text style={{ flex: '1 0 auto' }}>
+              <span className="monospace">{item.id}</span>
+            </Typography.Text>
+            <Typography.Text style={{ flex: '0 1 auto' }} type="secondary" ellipsis={{ tooltip: true }}>
+              <span className="monospace">{item.desc}</span>
             </Typography.Text>
           </SortableListItem>
         )}

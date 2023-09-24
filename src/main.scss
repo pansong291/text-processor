@@ -17,6 +17,10 @@ body {
     font-family: var(--font-family-mono);
   }
 
+  .fw-normal {
+    font-weight: normal;
+  }
+
   .ant-btn {
     display: flex;
     justify-content: center;
