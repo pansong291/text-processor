@@ -1,24 +1,27 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { App as AntdApp, ConfigProvider, theme } from 'antd'
 import Content from '@/components/Content'
 import { createGlobalStyle } from 'styled-components'
+import { useTheme } from '@/components/ThemeContext'
+import zhCN from 'antd/locale/zh_CN'
 
 const App: React.FC = () => {
-  const [dark, setDark] = useState<boolean>(window.utools?.isDarkColors() || false)
+  const { dark } = useTheme()
 
   return (
-    <ConfigProvider theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
+    <ConfigProvider locale={zhCN} theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
       <AntdApp>
-        <GlobalStyle dark={dark} />
-        <Content dark={dark} setDark={setDark} />
+        <GlobalStyle mode={dark ? 'dark' : 'light'} />
+        <Content />
       </AntdApp>
     </ConfigProvider>
   )
 }
 
-const GlobalStyle = createGlobalStyle<{ dark: boolean }>`
+const GlobalStyle = createGlobalStyle<{ mode: string }>`
   body {
-    background: ${(props) => (props.dark ? '#141414' : '#fff')};
+    --bg-color: var(--bg-color-${(props) => props.mode});
+    --bg-color-inverse-rgb: var(--bg-color-inverse-${(props) => props.mode}-rgb);
   }
 `
 

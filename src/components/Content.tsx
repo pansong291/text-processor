@@ -1,41 +1,114 @@
-import React, { useEffect, useRef } from 'react'
-import { Button } from 'antd'
-import MonacoEditor from '@/components/MonacoEditor'
-import { editor } from 'monaco-editor'
+import React, { useState } from 'react'
+import { Button, Typography } from 'antd'
+import { useTheme } from '@/components/ThemeContext'
+import { randomIdentifier } from '@/utils'
+import MoonIcon from '@/components/MoonIcon'
+import styled from 'styled-components'
+import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import ProcedureDrawer from '@/components/ProcedureDrawer'
+import SortableListItem from '@/components/SortableListItem'
+import SortableList from '@/components/SortableList'
+import { arrayMove } from '@dnd-kit/sortable'
+import { ProcedureConfig } from '@/types'
 
-type ContentProps = {
-  dark?: boolean
-  setDark: React.Dispatch<React.SetStateAction<boolean>>
-}
+type ContentProps = {}
 
-const Content: React.FC<ContentProps> = (props) => {
-  const editor = useRef<editor.IStandaloneCodeEditor>(null)
+const Content: React.FC<ContentProps> = () => {
+  const { dark, setDark } = useTheme()
+  const [procedureList, setProcedureList] = useState<Array<ProcedureConfig>>([])
+  const [openProcedure, setOpenProcedure] = useState(false)
+  const [procedure, setProcedure] = useState<ProcedureConfig>({ id: '', action: 'copy', operatorList: [] })
 
-  const getCodeText = () => {
-    return editor.current?.getValue() || ''
+  const updateList = (cb: (p: Array<ProcedureConfig>) => void) => {
+    setProcedureList((p) => {
+      cb(p)
+      return [...p]
+    })
   }
 
-  useEffect(() => {}, [])
-
   return (
-    <div>
-      <Button onClick={() => props.setDark((d) => !d)}>切换主题</Button>
-      <MonacoEditor ref={editor} style={{ height: 500 }} options={{ theme: props.dark ? 'dark' : 'light' }} />
-      <Button
-        onClick={() => {
-          alert(getCodeText())
-          window.utools?.hideMainWindowPasteText(getCodeText())
-        }}>
-        粘贴
-      </Button>
-      <Button
-        onClick={() => {
-          window.utools?.hideMainWindowTypeString(getCodeText())
-        }}>
-        输入
-      </Button>
-    </div>
+    <ContentStyle>
+      <div className="title-line">
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            updateList((p) => p.push({ id: randomIdentifier(), action: 'copy', operatorList: [{ id: randomIdentifier() }] }))
+          }}
+        />
+        <Button type="default" shape="circle" icon={<SettingOutlined />} onClick={() => setOpenProcedure(true)} />
+        <Button type={dark ? 'primary' : 'default'} shape="circle" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
+      </div>
+      <SortableList
+        bordered
+        rowKey="id"
+        dataSource={procedureList}
+        onSort={(active, over) => {
+          setProcedureList((p) => {
+            const from = p.findIndex((i) => i.id === active)
+            const to = p.findIndex((i) => i.id === over)
+            return arrayMove(p, from, to)
+          })
+        }}
+        renderItem={(item, i) => (
+          <SortableListItem
+            id={item.id}
+            actions={[
+              <Button
+                type="link"
+                size="small"
+                onClick={() => {
+                  setProcedure(item)
+                  setOpenProcedure(true)
+                }}>
+                编辑
+              </Button>,
+              <Button
+                type="link"
+                size="small"
+                danger
+                onClick={() => {
+                  updateList((p) => {
+                    if (p[i] === item) p.splice(i, 1)
+                  })
+                }}>
+                删除
+              </Button>
+            ]}>
+            <Typography.Text>{item.id}</Typography.Text>
+            <Typography.Text type="secondary" ellipsis={{ tooltip: true }}>
+              {item.desc}
+            </Typography.Text>
+          </SortableListItem>
+        )}
+      />
+      <ProcedureDrawer
+        procedure={procedure}
+        open={openProcedure}
+        onClose={(pc) => {
+          updateList((p) => {
+            const i = p.findIndex((o) => o.id === procedure.id)
+            if (i >= 0) p.splice(i, 1, pc)
+          })
+          setOpenProcedure(false)
+        }}
+      />
+    </ContentStyle>
   )
 }
+
+const ContentStyle = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px;
+
+  .title-line {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+`
 
 export default Content

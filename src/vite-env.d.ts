@@ -6,7 +6,7 @@ import { FMCF } from '@/types'
 declare global {
   interface Window {
     utools?: UToolsApi
-    $global: Record<string, FMCF>
-    $util: Record<string, Function>
+    $global: Record<string, Function>
+    $self: Record<string, FMCF>
   }
 }

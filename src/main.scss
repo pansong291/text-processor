@@ -1,0 +1,29 @@
+:root {
+  --bg-color: var(--bg-color-light);
+  --bg-color-dark: #141414;
+  --bg-color-light: #fff;
+  --bg-color-inverse-rgb: var(--bg-color-inverse-light-rgb);
+  --bg-color-inverse-dark-rgb: 255, 255, 255;
+  --bg-color-inverse-light-rgb: 20, 20, 20;
+  --font-family-mono: "JetBrains Mono", source-code-pro, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  transition: background-color, .3s;
+
+  .monospace {
+    font-family: var(--font-family-mono);
+  }
+
+  .ant-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .ant-list .ant-list-item:hover {
+    background-color: rgba(var(--bg-color-inverse-rgb), 0.04);
+  }
+}

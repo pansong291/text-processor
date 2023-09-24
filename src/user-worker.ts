@@ -41,14 +41,14 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   allowNonTsExtensions: true
 })
 
-const flatMapFunc: Record<string, { doc?: string }> = {
+const globalFunc: Record<string, { declaration: string; doc?: string }> = {
+  test: { declaration: '(s: string) => string', doc: '此方法仅作为测试示例' },
+  test2: { declaration: '', doc: '此方法仅作为测试示例无参' }
+}
+
+const selfFunc: Record<string, { doc?: string }> = {
   test: { doc: '测试' },
   someTest: { doc: '一些测试' }
 }
 
-const utilFunc: Record<string, { declaration: string; doc?: string }> = {
-  test: { declaration: '(s: string) => string', doc: '此方法仅作为测试示例' },
-  test2: { declaration: '(s: string) => string', doc: '此方法仅作为测试示例' }
-}
-
-updateLibs(flatMapFunc, utilFunc)
+updateLibs(globalFunc, selfFunc, false)
