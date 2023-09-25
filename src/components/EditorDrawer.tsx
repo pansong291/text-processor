@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Drawer } from 'antd'
 import MonacoEditor from '@/components/MonacoEditor'
-import { useTheme } from '@/components/ThemeContext'
+import { useTheme } from '@/components/ThemeProvider'
 import * as monaco from 'monaco-editor'
 
 type EditorDrawerProps = {

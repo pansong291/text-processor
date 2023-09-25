@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Button, Typography } from 'antd'
-import { useTheme } from '@/components/ThemeContext'
-import { randomIdentifier } from '@/utils'
+import { useTheme } from '@/components/ThemeProvider'
+import { createProcedure, getStorage } from '@/utils'
 import MoonIcon from '@/components/MoonIcon'
 import styled from 'styled-components'
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
@@ -11,13 +11,13 @@ import SortableList from '@/components/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
 import { ProcedureConfig } from '@/types'
 
-type ContentProps = {}
-
-const Content: React.FC<ContentProps> = () => {
+const Content: React.FC = () => {
   const { dark, setDark } = useTheme()
-  const [procedureList, setProcedureList] = useState<Array<ProcedureConfig>>([])
+  const [procedureList, setProcedureList] = useState<Array<ProcedureConfig>>(
+    () => getStorage('procedure-list')?.map?.((p: ProcedureConfig) => createProcedure(p)) || []
+  )
   const [openProcedure, setOpenProcedure] = useState(false)
-  const [procedure, setProcedure] = useState<ProcedureConfig>({ id: '', action: 'copy', operatorList: [] })
+  const [procedure, setProcedure] = useState<ProcedureConfig>({ id: '', name: '', action: 'copy', operatorList: [] })
 
   const updateList = (cb: (p: Array<ProcedureConfig>) => void) => {
     setProcedureList((p) => {
@@ -29,21 +29,7 @@ const Content: React.FC<ContentProps> = () => {
   return (
     <ContentStyle>
       <div className="title-line">
-        <Button
-          type="primary"
-          shape="circle"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            updateList((p) =>
-              p.push({
-                id: randomIdentifier(),
-                desc: '这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述这个是测试描述',
-                action: 'copy',
-                operatorList: [{ id: randomIdentifier() }]
-              })
-            )
-          }}
-        />
+        <Button type="primary" shape="circle" icon={<PlusOutlined />} onClick={() => updateList((p) => p.push(createProcedure()))} />
         <Button type="default" shape="circle" icon={<SettingOutlined />} onClick={() => setOpenProcedure(true)} />
         <Button type={dark ? 'primary' : 'default'} shape="circle" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
       </div>
@@ -84,7 +70,9 @@ const Content: React.FC<ContentProps> = () => {
               </Button>
             ]}>
             <Typography.Text style={{ flex: '1 0 auto' }}>
-              <span className="monospace">{item.id}</span>
+              <Button className="monospace" type="text" size="small">
+                {item.name}
+              </Button>
             </Typography.Text>
             <Typography.Text style={{ flex: '0 1 auto' }} type="secondary" ellipsis={{ tooltip: true }}>
               <span className="monospace">{item.desc}</span>

@@ -29,6 +29,7 @@ export type OperatorConfig = FuncDeclaration & {
 
 export type ProcedureConfig = {
   id: string
+  name: string
   desc?: string
   match?: string
   action: 'copy' | 'type-input' | 'copy-paste'

@@ -1,4 +1,4 @@
-import { FMCFMap, FuncConfMap, FuncDecMap, FuncMap, StorageKey } from '@/types'
+import { FMCFMap, FuncConfMap, FuncDecMap, FuncMap, OperatorConfig, ProcedureConfig, StorageKey } from '@/types'
 import * as monaco from 'monaco-editor'
 
 /**
@@ -131,4 +131,24 @@ export function randomIdentifier(len = 8) {
     len--
   }
   return result
+}
+
+export function createProcedure(old?: ProcedureConfig): ProcedureConfig {
+  const id = old?.id || randomIdentifier()
+  return {
+    id,
+    name: old?.name || id,
+    desc: old?.desc || '',
+    match: old?.match || undefined,
+    action: old?.action || 'copy',
+    operatorList: old?.operatorList?.map?.((o) => createOperator(o)) || []
+  }
+}
+
+export function createOperator(old?: OperatorConfig): OperatorConfig {
+  return {
+    id: old?.id || randomIdentifier(),
+    declaration: old?.declaration,
+    doc: old?.doc
+  }
 }
