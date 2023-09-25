@@ -8,7 +8,7 @@ import { FuncConfig, OperatorConfig, ProcedureConfig } from '@/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/InputModal'
 import styled from 'styled-components'
-import { createOperator, deleteStorage, getStorage, setStorage, updateLibs, useUpdater } from '@/utils'
+import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, updateLibs, useUpdater } from '@/utils'
 import { useFuncConfig } from '@/components/FuncConfigMapProvider'
 
 type ProcedureDrawerProps = {
@@ -30,16 +30,13 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   const [funcInstance, setFuncInstance] = useUpdater<FuncConfig & { id: string }>()
   const [modalValue, setModalValue] = useUpdater('')
 
-  const updateOperatorList = (cb: (p: Array<OperatorConfig>) => void) => {
-    if (props.global)
-      setGlobalOperatorList((p) => {
-        cb(p)
-      })
-    else
-      setProcedure((p) => {
-        cb(p.operatorList)
-      })
-  }
+  const updateOperatorList = props.global
+    ? setGlobalOperatorList
+    : createUpdater<Array<OperatorConfig>>((value) =>
+        setProcedure((p) => {
+          p.operatorList = value instanceof Function ? value(p.operatorList) : value
+        })
+      )
 
   const onCloseDrawer = () => {
     if (!props.global) {
@@ -77,7 +74,9 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
             title="添加函数"
             onClick={() => {
               const operator = createOperator()
-              updateOperatorList((p) => p.push(operator))
+              updateOperatorList((p) => {
+                p.push(operator)
+              })
               setFuncConfig((p) => {
                 p[operator.id] = { definition: '' }
               })
@@ -93,10 +92,10 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         rowKey="id"
         dataSource={procedure.operatorList}
         onSort={(active, over) => {
-          setProcedure((p) => {
-            const from = p.operatorList.findIndex((i) => i.id === active)
-            const to = p.operatorList.findIndex((i) => i.id === over)
-            p.operatorList = arrayMove(p.operatorList, from, to)
+          updateOperatorList((p) => {
+            const from = p.findIndex((i) => i.id === active)
+            const to = p.findIndex((i) => i.id === over)
+            return arrayMove(p, from, to)
           })
         }}
         renderItem={(item, i) => (
