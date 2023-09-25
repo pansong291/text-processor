@@ -1,14 +1,14 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { Button, Drawer } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import React, { useEffect, useLayoutEffect } from 'react'
+import { App as AntdApp, Button, Drawer, Modal, Typography } from 'antd'
+import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import EditorDrawer from '@/components/EditorDrawer'
 import SortableList from '@/components/SortableList'
 import SortableListItem from '@/components/SortableListItem'
-import { FuncConfig, FuncConfMap, OperatorConfig, ProcedureConfig } from '@/types'
+import { FuncConfig, OperatorConfig, ProcedureConfig } from '@/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/InputModal'
 import styled from 'styled-components'
-import { createOperator, getStorage, setStorage, updateLibs } from '@/utils'
+import { createOperator, deleteStorage, getStorage, setStorage, updateLibs, useUpdater } from '@/utils'
 import { useFuncConfig } from '@/components/FuncConfigMapProvider'
 
 type ProcedureDrawerProps = {
@@ -19,39 +19,26 @@ type ProcedureDrawerProps = {
 }
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
-  const [procedure, setProcedure] = useState(props.procedure)
-  const [globalOperatorList, setGlobalOperatorList] = useState<Array<OperatorConfig>>(
+  const { modal } = AntdApp.useApp()
+  const [procedure, setProcedure] = useUpdater(props.procedure)
+  const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
     () => getStorage('global-operator-list')?.map?.((o: OperatorConfig) => createOperator(o)) || []
   )
   const funcConfigContext = useFuncConfig()
-  const { funcConfig, updateFuncConfig } = ((fc) => {
-    const funcConfig = props.global ? fc.global : fc.self
-    const setFuncConfig = props.global ? fc.setGlobal : fc.setSelf
-    const updateFuncConfig = (cb: (m: FuncConfMap) => void) => {
-      setFuncConfig((o) => {
-        cb(o)
-        return { ...o }
-      })
-    }
-    return { funcConfig, updateFuncConfig }
-  })(funcConfigContext)
-  const [funcInstance, setFuncInstance] = useState<FuncConfig & { id: string }>()
-  const [modalValue, setModalValue] = useState('')
-
-  const updateProcedure = (cb: (p: ProcedureConfig) => void) => {
-    setProcedure((p) => {
-      cb(p)
-      return { ...p }
-    })
-  }
+  const funcConfig = props.global ? funcConfigContext.global : funcConfigContext.self
+  const setFuncConfig = props.global ? funcConfigContext.setGlobal : funcConfigContext.setSelf
+  const [funcInstance, setFuncInstance] = useUpdater<FuncConfig & { id: string }>()
+  const [modalValue, setModalValue] = useUpdater('')
 
   const updateOperatorList = (cb: (p: Array<OperatorConfig>) => void) => {
     if (props.global)
       setGlobalOperatorList((p) => {
         cb(p)
-        return [...p]
       })
-    else updateProcedure((p) => cb(p.operatorList))
+    else
+      setProcedure((p) => {
+        cb(p.operatorList)
+      })
   }
 
   const onCloseDrawer = () => {
@@ -69,6 +56,10 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
     [funcConfigContext.global, funcConfigContext.self, props.global]
   )
 
+  const onEditClick = (item: OperatorConfig) => {
+    setFuncInstance(Object.assign({ id: item.id }, funcConfig[item.id]))
+  }
+
   return (
     <Drawer
       placement="right"
@@ -78,15 +69,18 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       headerStyle={{ padding: '8px 16px' }}
       title={
         <DrawerTitle>
-          <Button className="monospace fw-normal" type="text" size="small" onClick={() => setModalValue(procedure.name)}>
+          <Button className="monospace" type="text" size="small" onClick={() => setModalValue(procedure.name)}>
             {procedure.name}
           </Button>
           <button
             className="ant-drawer-close"
+            title="添加函数"
             onClick={() => {
               const operator = createOperator()
               updateOperatorList((p) => p.push(operator))
-              updateFuncConfig((p) => (p[operator.id] = { definition: '' }))
+              setFuncConfig((p) => {
+                p[operator.id] = { definition: '' }
+              })
             }}>
             <PlusOutlined />
           </button>
@@ -99,7 +93,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         rowKey="id"
         dataSource={procedure.operatorList}
         onSort={(active, over) => {
-          updateProcedure((p) => {
+          setProcedure((p) => {
             const from = p.operatorList.findIndex((i) => i.id === active)
             const to = p.operatorList.findIndex((i) => i.id === over)
             p.operatorList = arrayMove(p.operatorList, from, to)
@@ -109,28 +103,39 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           <SortableListItem
             id={item.id}
             actions={[
+              <Button type="text" size="small" title="编辑" icon={<FormOutlined />} onClick={() => onEditClick(item)} />,
               <Button
-                type="link"
-                size="small"
-                onClick={() => {
-                  setFuncInstance(Object.assign({ id: item.id }, funcConfig[item.id]))
-                }}>
-                编辑
-              </Button>,
-              <Button
-                type="link"
+                type="text"
                 size="small"
                 danger
+                title="删除"
+                icon={<DeleteOutlined />}
                 onClick={() => {
-                  updateOperatorList((p) => {
-                    if (p[i] === item) p.splice(i, 1)
+                  modal.confirm({
+                    title: '删除函数',
+                    content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
+                    okType: 'danger',
+                    maskClosable: true,
+                    afterClose: Modal.destroyAll,
+                    onOk() {
+                      deleteStorage(`$self-${item.id}`)
+                      updateOperatorList((p) => {
+                        if (p[i] === item) p.splice(i, 1)
+                      })
+                      setFuncConfig((p) => {
+                        delete p[item.id]
+                      })
+                    }
                   })
-                  updateFuncConfig((p) => delete p[item.id])
-                }}>
-                删除
-              </Button>
+                }}
+              />
             ]}>
-            <div>{item.id}</div>
+            <Button className="monospace border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
+              {item.id}
+            </Button>
+            <Typography.Text className="monospace flex-shrink" type="secondary" ellipsis={{ tooltip: true }}>
+              {item.declaration}
+            </Typography.Text>
           </SortableListItem>
         )}
       />
@@ -139,24 +144,24 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         open={!!funcInstance}
         code={funcInstance?.definition}
         onClose={(code) => {
-          setFuncInstance((fc) => {
-            if (fc) {
-              updateFuncConfig((p) => {
-                if (p[fc.id]) p[fc.id].definition = code
-                else p[fc.id] = { definition: code }
-              })
-            }
-            return undefined
-          })
+          if (funcInstance)
+            setFuncConfig((p) => {
+              if (p[funcInstance.id]) p[funcInstance.id].definition = code
+              else p[funcInstance.id] = { definition: code }
+            })
+          setFuncInstance(undefined)
         }}
       />
       <InputModal
-        title={'修改流程标题'}
+        title={'修改流程名称'}
         with={300}
         maxLength={30}
         value={modalValue}
         onClose={(v) => {
-          if (v) updateProcedure((p) => (p.name = v))
+          if (v)
+            setProcedure((p) => {
+              p.name = v
+            })
           setModalValue('')
         }}
       />

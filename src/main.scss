@@ -21,10 +21,24 @@ body {
     font-weight: normal;
   }
 
+  .flex-grow {
+    flex: 1 0 auto;
+  }
+
+  .flex-shrink {
+    flex: 0 1 auto;
+  }
+
   .ant-btn {
     display: inline-flex;
     justify-content: center;
     align-items: center;
+
+    &.border-less {
+      border: none;
+      background-color: transparent;
+      box-shadow: none;
+    }
   }
 
   .ant-list .ant-list-item:hover {

@@ -1,17 +1,17 @@
-import React, { createContext, useContext, useState } from 'react'
-import { FuncConfMap, OperatorConfig } from '@/types'
-import { getStorage } from '@/utils'
+import React, { createContext, useContext } from 'react'
+import { FuncConfMap, OperatorConfig, Processor } from '@/types'
+import { getStorage, useUpdater } from '@/utils'
 
 const FuncConfigMapContext = createContext<{
   global: FuncConfMap
-  setGlobal: React.Dispatch<React.SetStateAction<FuncConfMap>>
+  setGlobal: React.Dispatch<Processor<FuncConfMap>>
   self: FuncConfMap
-  setSelf: React.Dispatch<React.SetStateAction<FuncConfMap>>
+  setSelf: React.Dispatch<Processor<FuncConfMap>>
 }>({
   global: {},
-  setGlobal: () => {},
+  setGlobal() {},
   self: {},
-  setSelf: () => {}
+  setSelf() {}
 })
 
 export const getConfigMap = (type: 'global' | 'self', operatorList: Array<OperatorConfig>) => {
@@ -27,8 +27,9 @@ export const getConfigMap = (type: 'global' | 'self', operatorList: Array<Operat
 }
 
 const FuncConfigMapProvider: React.FC<React.PropsWithChildren> = (props) => {
-  const [global, setGlobal] = useState<FuncConfMap>(getConfigMap('global', getStorage('global-operator-list')))
-  const [self, setSelf] = useState<FuncConfMap>({})
+  const [global, setGlobal] = useUpdater<FuncConfMap>(getConfigMap('global', getStorage('global-operator-list')))
+  const [self, setSelf] = useUpdater<FuncConfMap>({})
+
   return <FuncConfigMapContext.Provider value={{ global, setGlobal, self, setSelf }}>{props.children}</FuncConfigMapContext.Provider>
 }
 

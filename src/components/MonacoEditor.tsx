@@ -1,5 +1,6 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+import { useUpdater } from '@/utils'
 
 type MonacoEditorProps = {
   className?: string
@@ -8,7 +9,7 @@ type MonacoEditorProps = {
 }
 
 const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEditorProps>((props, ref) => {
-  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor | null>(null)
   const monacoEl = useRef<HTMLDivElement | null>(null)
 
   useImperativeHandle(ref, () => editor!, [editor])

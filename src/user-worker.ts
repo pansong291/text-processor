@@ -3,6 +3,7 @@ import * as monaco from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 // @ts-ignore
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import { utoolsLib } from '@/utils'
 
 self.MonacoEnvironment = {
   getWorker(_workerId: any, label: string) {
@@ -39,3 +40,4 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   target: monaco.languages.typescript.ScriptTarget.ESNext,
   allowNonTsExtensions: true
 })
+monaco.editor.createModel(utoolsLib.content, 'typescript', monaco.Uri.parse(utoolsLib.filePath))

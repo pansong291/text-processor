@@ -35,3 +35,5 @@ export type ProcedureConfig = {
   action: 'copy' | 'type-input' | 'copy-paste'
   operatorList: Array<OperatorConfig>
 }
+
+export type Processor<T> = ((state: T) => T | void) | T

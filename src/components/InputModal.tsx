@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useState } from 'react'
-import { Input, Modal } from 'antd'
+import React, { useLayoutEffect } from 'react'
+import { Form, Input, Modal } from 'antd'
+import { useUpdater } from '@/utils'
 
 type InputModalProps = {
   value: string
@@ -11,7 +12,7 @@ type InputModalProps = {
 }
 
 const InputModal: React.FC<InputModalProps> = (props) => {
-  const [value, setValue] = useState(props.value)
+  const [value, setValue] = useUpdater(props.value)
 
   useLayoutEffect(() => {
     setValue(props.value)
@@ -25,7 +26,11 @@ const InputModal: React.FC<InputModalProps> = (props) => {
       open={!!props.value}
       onOk={() => props.onClose(value)}
       onCancel={() => props.onClose()}>
-      <Input placeholder={props.placeholder} value={value} maxLength={props.maxLength} onChange={(e) => setValue(e.target.value)} />
+      <Form layout="vertical">
+        <Form.Item label="函数名">
+          <Input placeholder={props.placeholder} value={value} maxLength={props.maxLength} onChange={(e) => setValue(e.target.value)} />
+        </Form.Item>
+      </Form>
     </Modal>
   )
 }

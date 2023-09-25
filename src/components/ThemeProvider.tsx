@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext } from 'react'
+import { useUpdater } from '@/utils'
+import { Processor } from '@/types'
 
-const ThemeContext = createContext<{ dark: boolean; setDark: React.Dispatch<React.SetStateAction<boolean>> }>({
+const ThemeContext = createContext<{ dark: boolean; setDark: React.Dispatch<Processor<boolean>> }>({
   dark: false,
   setDark() {}
 })
 
 const ThemeProvider: React.FC<React.PropsWithChildren> = (props) => {
-  const [dark, setDark] = useState(window.utools?.isDarkColors() || false)
+  const [dark, setDark] = useUpdater(window.utools?.isDarkColors() || false)
   return <ThemeContext.Provider value={{ dark, setDark }}>{props.children}</ThemeContext.Provider>
 }
 
