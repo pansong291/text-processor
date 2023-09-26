@@ -13,7 +13,7 @@ body {
   background-color: var(--bg-color);
   transition: background-color, .3s;
 
-  .monospace {
+  button.ant-btn, input.ant-input, .ant-modal-confirm-title, .ant-modal-confirm-content {
     font-family: var(--font-family-mono);
   }
 

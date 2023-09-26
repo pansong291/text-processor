@@ -730,7 +730,7 @@ export function updateLibs(globalFuncMap: FuncDecMap, selfFuncMap: FuncDecMap, p
   monaco.languages.typescript.javascriptDefaults.setExtraLibs([
     {
       content: [
-        'type FlatMapCallbackFunc = (value: string, index: number, array: string[]) => string | ReadonlyArray<string>;',
+        'type FlatMapCallbackFunc<T> = (value: T, index: number, array: T[]) => T | ReadonlyArray<T>',
         'declare global {',
         '  namespace globalThis {',
         '    var $global: {',
@@ -740,7 +740,7 @@ export function updateLibs(globalFuncMap: FuncDecMap, selfFuncMap: FuncDecMap, p
         '    }',
         '    var $self: {',
         Object.entries(selfFuncMap)
-          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:FlatMapCallbackFunc;`)
+          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:FlatMapCallbackFunc<${f.declaration || 'any'}>;`)
           .join('\n'),
         '    }',
         '  }',

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect } from 'react'
-import { App as AntdApp, Button, Drawer, Modal, Typography } from 'antd'
+import { App as AntdApp, Button, Drawer, Modal } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import EditorDrawer from '@/components/EditorDrawer'
 import SortableList from '@/components/SortableList'
@@ -10,6 +10,7 @@ import InputModal from '@/components/InputModal'
 import styled from 'styled-components'
 import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, updateLibs, useUpdater } from '@/utils'
 import { useFuncConfig } from '@/components/FuncConfigMapProvider'
+import ObjectViewer from '@/components/ObjectViewer'
 
 type ProcedureDrawerProps = {
   global?: boolean
@@ -17,6 +18,13 @@ type ProcedureDrawerProps = {
   open: boolean
   onClose: (p: ProcedureConfig) => void
 }
+
+/*
+TODO 待实现功能：
+ 1 正则匹配
+ 2 结束游标
+ 3 对象预览
+ */
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   const { modal } = AntdApp.useApp()
@@ -66,7 +74,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       headerStyle={{ padding: '8px 16px' }}
       title={
         <DrawerTitle>
-          <Button className="monospace" type="text" size="small" onClick={() => setModalValue(procedure.name)}>
+          <Button type="text" size="small" onClick={() => setModalValue(procedure.name)}>
             {procedure.name}
           </Button>
           <button
@@ -87,59 +95,61 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       }
       open={props.open}
       onClose={onCloseDrawer}>
-      <SortableList
-        bordered
-        rowKey="id"
-        dataSource={procedure.operatorList}
-        onSort={(active, over) => {
-          updateOperatorList((p) => {
-            const from = p.findIndex((i) => i.id === active)
-            const to = p.findIndex((i) => i.id === over)
-            return arrayMove(p, from, to)
-          })
-        }}
-        renderItem={(item, i) => (
-          <SortableListItem
-            id={item.id}
-            actions={[
-              <Button type="text" size="small" title="编辑" icon={<FormOutlined />} onClick={() => onEditClick(item)} />,
-              <Button
-                type="text"
-                size="small"
-                danger
-                title="删除"
-                icon={<DeleteOutlined />}
-                onClick={() => {
-                  modal.confirm({
-                    title: '删除函数',
-                    content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
-                    okType: 'danger',
-                    maskClosable: true,
-                    afterClose: Modal.destroyAll,
-                    onOk() {
-                      deleteStorage(`$self-${item.id}`)
-                      updateOperatorList((p) => {
-                        if (p[i] === item) p.splice(i, 1)
-                      })
-                      setFuncConfig((p) => {
-                        delete p[item.id]
-                      })
-                    }
-                  })
-                }}
-              />
-            ]}>
-            <Button className="monospace border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
-              {item.id}
-            </Button>
-            <Typography.Text className="monospace flex-shrink" type="secondary" ellipsis={{ tooltip: true }}>
-              {item.declaration}
-            </Typography.Text>
-          </SortableListItem>
-        )}
-      />
+      <DrawerContent>
+        <SortableList
+          bordered
+          rowKey="id"
+          dataSource={procedure.operatorList}
+          onSort={(active, over) => {
+            updateOperatorList((p) => {
+              const from = p.findIndex((i) => i.id === active)
+              const to = p.findIndex((i) => i.id === over)
+              return arrayMove(p, from, to)
+            })
+          }}
+          renderItem={(item, i) => (
+            <SortableListItem
+              id={item.id}
+              actions={[
+                <Button type="text" size="small" title="编辑" icon={<FormOutlined />} onClick={() => onEditClick(item)} />,
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  title="删除"
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    modal.confirm({
+                      title: '删除函数',
+                      content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
+                      okType: 'danger',
+                      maskClosable: true,
+                      afterClose: Modal.destroyAll,
+                      onOk() {
+                        deleteStorage(`$self-${item.id}`)
+                        updateOperatorList((p) => {
+                          if (p[i] === item) p.splice(i, 1)
+                        })
+                        setFuncConfig((p) => {
+                          delete p[item.id]
+                        })
+                      }
+                    })
+                  }}
+                />
+              ]}>
+              <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
+                {item.id}
+              </Button>
+            </SortableListItem>
+          )}
+        />
+        <div className="obj-view-wrap">
+          <ObjectViewer data={['a', 'b', { c: true }, [], () => {}, {}]} />
+        </div>
+      </DrawerContent>
       <EditorDrawer
-        title={<div className="monospace fw-normal">{`function ${funcInstance?.id}(${props.global ? '' : 'value, index, array'})`}</div>}
+        title={<div className="fw-normal">{`function ${funcInstance?.id}(${props.global ? '' : 'value, index, array'})`}</div>}
         open={!!funcInstance}
         code={funcInstance?.definition}
         onClose={(code) => {
@@ -171,6 +181,19 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
 const DrawerTitle = styled.div`
   display: flex;
   justify-content: space-between;
+`
+
+const DrawerContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+
+  .ant-list {
+    flex: 1 1 0;
+  }
+
+  .obj-view-wrap {
+    flex: 1 1 0;
+  }
 `
 
 export default ProcedureDrawer

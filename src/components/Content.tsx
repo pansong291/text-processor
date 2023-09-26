@@ -81,10 +81,10 @@ const Content: React.FC = () => {
                 }}
               />
             ]}>
-            <Button className="monospace border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
+            <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
               {item.name}
             </Button>
-            <Typography.Text className="monospace flex-shrink" type="secondary" ellipsis={{ tooltip: true }}>
+            <Typography.Text className="flex-shrink" type="secondary" ellipsis={{ tooltip: true }}>
               {item.desc}
             </Typography.Text>
           </SortableListItem>

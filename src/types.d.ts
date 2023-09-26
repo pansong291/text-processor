@@ -13,9 +13,9 @@ export type FuncConfig = FuncDeclaration & FuncDefinition
 
 export type FuncConfMap = Record<string, FuncDeclaration & FuncDefinition>
 
-export type FlatMapCallbackFunc = (value: string, index: number, array: string[]) => string | ReadonlyArray<string>
+export type FlatMapCallbackFunc<T extends any> = (value: T, index: number, array: T[]) => T | ReadonlyArray<T>
 
-export type FMCF = FlatMapCallbackFunc
+export type FMCF<T = any> = FlatMapCallbackFunc<T>
 
 export type FMCFMap = Record<string, FMCF>
 
@@ -32,6 +32,7 @@ export type ProcedureConfig = {
   name: string
   desc?: string
   match?: string
+  end?: string
   action: 'copy' | 'type-input' | 'copy-paste'
   operatorList: Array<OperatorConfig>
 }
