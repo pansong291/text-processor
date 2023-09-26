@@ -1,35 +1,39 @@
-import React, { useLayoutEffect } from 'react'
-import { Form, Input, Modal } from 'antd'
+import React, { useLayoutEffect, useMemo } from 'react'
+import { Form, Input, InputProps, Modal } from 'antd'
 import { useUpdater } from '@/utils'
 
 type InputModalProps = {
-  value: string
-  onClose: (v?: string) => void
+  onClose: (values?: Array<string>) => void
   title?: React.ReactNode
   with?: string | number
-  placeholder?: string
-  maxLength?: number
+  inputs: Array<InputProps & { label?: string }>
 }
 
 const InputModal: React.FC<InputModalProps> = (props) => {
-  const [value, setValue] = useUpdater(props.value)
+  const [values, setValues] = useUpdater<Array<string>>([])
+  const propValues = useMemo<Array<string>>(() => props.inputs.map((i) => i.value as string), props.inputs)
+  const open = useMemo(() => !!props.inputs.find((i) => i.value), props.inputs)
 
   useLayoutEffect(() => {
-    setValue(props.value)
-  }, [props.value])
+    setValues(propValues)
+  }, [propValues])
 
   return (
-    <Modal
-      centered
-      title={props.title}
-      width={props.with}
-      open={!!props.value}
-      onOk={() => props.onClose(value)}
-      onCancel={() => props.onClose()}>
+    <Modal centered title={props.title} width={props.with} open={open} onOk={() => props.onClose(values)} onCancel={() => props.onClose()}>
       <Form layout="vertical">
-        <Form.Item label="函数名">
-          <Input placeholder={props.placeholder} value={value} maxLength={props.maxLength} onChange={(e) => setValue(e.target.value)} />
-        </Form.Item>
+        {props.inputs.map((ip, i) => (
+          <Form.Item key={i} label={ip.label}>
+            <Input
+              {...ip}
+              value={values[i]}
+              onChange={(e) =>
+                setValues((s) => {
+                  s[i] = e.target.value
+                })
+              }
+            />
+          </Form.Item>
+        ))}
       </Form>
     </Modal>
   )

@@ -11,18 +11,18 @@ import SortableList from '@/components/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
 import { ProcedureConfig, StorageKey } from '@/types'
 
+const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', action: 'copy', operatorList: [] }
+
 const Content: React.FC = () => {
   const { modal } = AntdApp.useApp()
   const { dark, setDark } = useTheme()
   const [procedureList, setProcedureList] = useUpdater<Array<ProcedureConfig>>(
     () => getStorage('procedure-list')?.map?.((p: ProcedureConfig) => createProcedure(p)) || []
   )
-  const [openProcedure, setOpenProcedure] = useUpdater(false)
-  const [procedure, setProcedure] = useUpdater<ProcedureConfig>({ id: '', name: '', action: 'copy', operatorList: [] })
+  const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
 
   const onEditClick = (item: ProcedureConfig) => {
     setProcedure(item)
-    setOpenProcedure(true)
   }
 
   return (
@@ -39,7 +39,7 @@ const Content: React.FC = () => {
             })
           }
         />
-        <Button type="default" shape="circle" title="全局函数" icon={<FunctionOutlined />} onClick={() => setOpenProcedure(true)} />
+        <Button type="default" shape="circle" title="全局函数" icon={<FunctionOutlined />} />
         <Button type={dark ? 'primary' : 'default'} shape="circle" title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
       </div>
       <SortableList
@@ -92,14 +92,14 @@ const Content: React.FC = () => {
       />
       <ProcedureDrawer
         procedure={procedure}
-        open={openProcedure}
-        onClose={(pc) => {
+        onChange={(pc) => {
           setProcedureList((p) => {
             const i = p.findIndex((o) => o.id === procedure.id)
             if (i >= 0) p.splice(i, 1, pc)
           })
-          setOpenProcedure(false)
+          setProcedure(pc)
         }}
+        onClose={() => setProcedure(BLANK_PROCEDURE)}
       />
     </ContentStyle>
   )

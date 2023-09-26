@@ -7,25 +7,21 @@ type FuncDeclaration = {
   doc?: string
 }
 
-export type FuncDecMap = Record<string, FuncDeclaration>
+type Identifiable = { id: string }
+
+export type StrMap<T> = Record<string, T>
 
 export type FuncConfig = FuncDeclaration & FuncDefinition
-
-export type FuncConfMap = Record<string, FuncDeclaration & FuncDefinition>
 
 export type FlatMapCallbackFunc<T extends any> = (value: T, index: number, array: T[]) => T | ReadonlyArray<T>
 
 export type FMCF<T = any> = FlatMapCallbackFunc<T>
 
-export type FMCFMap = Record<string, FMCF>
-
-export type FuncMap = Record<string, Function>
+export type FuncInstance = FuncConfig & Identifiable
 
 export type StorageKey = `$global-${string}` | `$self-${string}` | 'global-operator-list' | 'procedure-list'
 
-export type OperatorConfig = FuncDeclaration & {
-  id: string
-}
+export type OperatorConfig = FuncDeclaration & Identifiable
 
 export type ProcedureConfig = {
   id: string

@@ -1,4 +1,4 @@
-import { FMCFMap, FuncConfMap, FuncDecMap, FuncMap, OperatorConfig, ProcedureConfig, Processor, StorageKey } from '@/types'
+import { FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types'
 import * as monaco from 'monaco-editor'
 import React, { useState } from 'react'
 
@@ -726,7 +726,7 @@ export {}`
 /**
  * 更新编辑器的支持库
  */
-export function updateLibs(globalFuncMap: FuncDecMap, selfFuncMap: FuncDecMap, placeArgs = true) {
+export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: StrMap<FuncDeclaration>, placeArgs = true) {
   monaco.languages.typescript.javascriptDefaults.setExtraLibs([
     {
       content: [
@@ -805,8 +805,8 @@ function putMethod<T extends object>(obj: T, name: string & keyof T, definition:
 /**
  * 在 window 对象上挂载 $self
  */
-export function use$self(configMap: FuncConfMap) {
-  const $self: FMCFMap = {}
+export function use$self(configMap: StrMap<FuncConfig>) {
+  const $self: StrMap<FMCF> = {}
   if (configMap)
     Object.entries(configMap).forEach(([n, d]) => {
       putMethod($self, n, `return function(value,index,array){\n${d.definition}\n}`)
@@ -817,8 +817,8 @@ export function use$self(configMap: FuncConfMap) {
 /**
  * 在 window 对象上挂载 $global
  */
-export function use$global(configMap: FuncConfMap) {
-  const $global: FuncMap = {}
+export function use$global(configMap: StrMap<FuncConfig>) {
+  const $global: StrMap<Function> = {}
   if (configMap)
     Object.entries(configMap).forEach(([n, d]) => {
       putMethod($global, n, `return function(){\n${d.definition}\n}`)

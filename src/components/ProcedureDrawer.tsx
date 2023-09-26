@@ -1,10 +1,10 @@
-import React, { useEffect, useLayoutEffect } from 'react'
+import React, { useEffect } from 'react'
 import { App as AntdApp, Button, Drawer, Modal } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
-import EditorDrawer from '@/components/EditorDrawer'
+import FunctionDrawer from '@/components/FunctionDrawer'
 import SortableList from '@/components/SortableList'
 import SortableListItem from '@/components/SortableListItem'
-import { FuncConfig, OperatorConfig, ProcedureConfig } from '@/types'
+import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/InputModal'
 import styled from 'styled-components'
@@ -12,11 +12,13 @@ import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, u
 import { useFuncConfig } from '@/components/FuncConfigMapProvider'
 import ObjectViewer from '@/components/ObjectViewer'
 
+const BLANK_FUNC_INST: FuncInstance = { id: '', definition: '' }
+
 type ProcedureDrawerProps = {
   global?: boolean
   procedure: ProcedureConfig
-  open: boolean
-  onClose: (p: ProcedureConfig) => void
+  onChange: React.Dispatch<ProcedureConfig>
+  onClose: () => void
 }
 
 /*
@@ -24,37 +26,36 @@ TODO 待实现功能：
  1 正则匹配
  2 结束游标
  3 对象预览
+ Drawer 目前存在 bug：
+ 关闭时，动画还未结束，里面的内容就已经清空了，有一瞬间可见的空白闪烁
  */
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   const { modal } = AntdApp.useApp()
-  const [procedure, setProcedure] = useUpdater(props.procedure)
+  const { procedure, onChange } = props
   const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
     () => getStorage('global-operator-list')?.map?.((o: OperatorConfig) => createOperator(o)) || []
   )
   const funcConfigContext = useFuncConfig()
   const funcConfig = props.global ? funcConfigContext.global : funcConfigContext.self
   const setFuncConfig = props.global ? funcConfigContext.setGlobal : funcConfigContext.setSelf
-  const [funcInstance, setFuncInstance] = useUpdater<FuncConfig & { id: string }>()
-  const [modalValue, setModalValue] = useUpdater('')
+  const [funcInst, setFuncInst] = useUpdater<FuncInstance>(BLANK_FUNC_INST)
+  const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   const updateOperatorList = props.global
     ? setGlobalOperatorList
-    : createUpdater<Array<OperatorConfig>>((value) =>
-        setProcedure((p) => {
-          p.operatorList = value instanceof Function ? value(p.operatorList) : value
-        })
-      )
+    : createUpdater<Array<OperatorConfig>>((value) => {
+        procedure.operatorList = value instanceof Function ? value(procedure.operatorList) : value
+        onChange(procedure)
+      })
 
   const onCloseDrawer = () => {
+    props.onClose()
     if (!props.global) {
-      props.onClose?.(procedure)
       return
     }
     setStorage('global-operator-list', globalOperatorList)
   }
-
-  useLayoutEffect(() => setProcedure(props.procedure), [props.procedure])
 
   useEffect(
     () => updateLibs(funcConfigContext.global, funcConfigContext.self, !props.global),
@@ -62,19 +63,19 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   )
 
   const onEditClick = (item: OperatorConfig) => {
-    setFuncInstance(Object.assign({ id: item.id }, funcConfig[item.id]))
+    setFuncInst(Object.assign({ id: item.id }, funcConfig[item.id]))
   }
 
   return (
     <Drawer
       placement="right"
       width="80%"
-      style={{ transform: `translateX(-${funcInstance ? 25 : 0}%)`, transition: 'transform .3s' }}
+      style={{ transform: `translateX(-${funcInst.id ? 25 : 0}%)`, transition: 'transform .3s' }}
       push={false}
       headerStyle={{ padding: '8px 16px' }}
       title={
         <DrawerTitle>
-          <Button type="text" size="small" onClick={() => setModalValue(procedure.name)}>
+          <Button type="text" size="small" onClick={() => setModalValues([procedure.name, procedure.desc || ''])}>
             {procedure.name}
           </Button>
           <button
@@ -93,7 +94,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           </button>
         </DrawerTitle>
       }
-      open={props.open}
+      open={!!props.procedure.id}
       onClose={onCloseDrawer}>
       <DrawerContent>
         <SortableList
@@ -148,30 +149,37 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           <ObjectViewer data={['a', 'b', { c: true }, [], () => {}, {}]} />
         </div>
       </DrawerContent>
-      <EditorDrawer
-        title={<div className="fw-normal">{`function ${funcInstance?.id}(${props.global ? '' : 'value, index, array'})`}</div>}
-        open={!!funcInstance}
-        code={funcInstance?.definition}
+      <FunctionDrawer
+        global={props.global}
+        funcInstance={funcInst}
+        onChange={(f) => {
+          setFuncConfig((p) => {
+            delete p[funcInst.id]
+            p[f.id] = { definition: f.definition, declaration: f.declaration, doc: f.doc }
+          })
+          setFuncInst(f)
+        }}
         onClose={(code) => {
-          if (funcInstance)
-            setFuncConfig((p) => {
-              if (p[funcInstance.id]) p[funcInstance.id].definition = code
-              else p[funcInstance.id] = { definition: code }
-            })
-          setFuncInstance(undefined)
+          setFuncConfig((p) => {
+            p[funcInst.id].definition = code
+          })
+          setFuncInst(BLANK_FUNC_INST)
         }}
       />
       <InputModal
-        title={'修改流程名称'}
+        title={'修改流程信息'}
         with={300}
-        maxLength={30}
-        value={modalValue}
+        inputs={[
+          { label: '流程名称', maxLength: 30, value: modalValues[0] },
+          { label: '流程描述', maxLength: 200, value: modalValues[1] }
+        ]}
         onClose={(v) => {
-          if (v)
-            setProcedure((p) => {
-              p.name = v
-            })
-          setModalValue('')
+          if (v) {
+            if (v[0]) procedure.name = v[0]
+            procedure.desc = v[1]
+            onChange(procedure)
+          }
+          setModalValues([])
         }}
       />
     </Drawer>
