@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react'
-import { App as AntdApp, Button, Drawer, Modal } from 'antd'
+import React from 'react'
+import { App as AntdApp, Button, Modal } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import FunctionDrawer from '@/components/FunctionDrawer'
-import SortableList from '@/components/SortableList'
-import SortableListItem from '@/components/SortableListItem'
-import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types'
+import SortableList from '@/components/base/SortableList'
+import SortableListItem from '@/components/base/SortableListItem'
+import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/types'
 import { arrayMove } from '@dnd-kit/sortable'
-import InputModal from '@/components/InputModal'
+import InputModal from '@/components/base/InputModal'
 import styled from 'styled-components'
-import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, updateLibs, useUpdater } from '@/utils'
-import { useFuncConfig } from '@/components/FuncConfigMapProvider'
-import ObjectViewer from '@/components/ObjectViewer'
+import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, useUpdater } from '@/utils'
+import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
+import ObjectViewer from '@/components/base/ObjectViewer'
+import Drawer from '@/components/base/Drawer'
 
 const BLANK_FUNC_INST: FuncInstance = { id: '', definition: '' }
 
@@ -18,20 +19,21 @@ type ProcedureDrawerProps = {
   global?: boolean
   procedure: ProcedureConfig
   onChange: React.Dispatch<ProcedureConfig>
-  onClose: () => void
+  onFullyClose: () => void
 }
 
 /*
 TODO 待实现功能：
  1 正则匹配
  2 结束游标
- 3 对象预览
- Drawer 目前存在 bug：
+ 3 对象预览 已引入相关组件
+ Drawer 目前存在 bug： 已解决
  关闭时，动画还未结束，里面的内容就已经清空了，有一瞬间可见的空白闪烁
  */
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   const { modal } = AntdApp.useApp()
+  const [push, setPush] = useUpdater(0)
   const { procedure, onChange } = props
   const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
     () => getStorage('global-operator-list')?.map?.((o: OperatorConfig) => createOperator(o)) || []
@@ -50,19 +52,15 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       })
 
   const onCloseDrawer = () => {
-    props.onClose()
+    props.onFullyClose()
     if (!props.global) {
       return
     }
     setStorage('global-operator-list', globalOperatorList)
   }
 
-  useEffect(
-    () => updateLibs(funcConfigContext.global, funcConfigContext.self, !props.global),
-    [funcConfigContext.global, funcConfigContext.self, props.global]
-  )
-
   const onEditClick = (item: OperatorConfig) => {
+    setPush(-25)
     setFuncInst(Object.assign({ id: item.id }, funcConfig[item.id]))
   }
 
@@ -70,7 +68,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
     <Drawer
       placement="right"
       width="80%"
-      style={{ transform: `translateX(-${funcInst.id ? 25 : 0}%)`, transition: 'transform .3s' }}
+      style={{ transform: `translateX(${push}%)`, transition: 'transform .3s' }}
       push={false}
       headerStyle={{ padding: '8px 16px' }}
       title={
@@ -95,7 +93,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         </DrawerTitle>
       }
       open={!!props.procedure.id}
-      onClose={onCloseDrawer}>
+      onFullyClose={onCloseDrawer}>
       <DrawerContent>
         <SortableList
           bordered
@@ -145,9 +143,37 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
             </SortableListItem>
           )}
         />
-        <div className="obj-view-wrap">
-          <ObjectViewer data={['a', 'b', { c: true }, [], () => {}, {}]} />
-        </div>
+        <ObjectViewer
+          className="obj-view-wrap"
+          data={{
+            string: 'Every stop I make, I make a new friend.',
+            integer: 42,
+            map: new Map<string, any>([
+              ['foo', 1],
+              ['bar', { baz: null }]
+            ]),
+            url: 'http://localhost:3000',
+            array: [['a', 1], 1, Symbol('sym'), 'Mutley, you snickering, floppy eared hound.', { foo: 'nested' }, null],
+            float: 3.14159,
+            object: {
+              boolTrue: true,
+              emptySet: new Set()
+            },
+            boolFalse: false,
+            set: new Set([1, 'string', { foo: 1 }]),
+            date: new Date(),
+            reg: /^pattern\d+/gi,
+            async *asyncGenerator() {},
+            arrow: () => {},
+            anon: function () {},
+            undef: undefined,
+            baz: null,
+            sym: Symbol('sym'),
+            err: new Error('unknown'),
+            plain: 'foo: bar',
+            syit: Symbol.iterator
+          }}
+        />
       </DrawerContent>
       <FunctionDrawer
         global={props.global}
@@ -159,7 +185,8 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           })
           setFuncInst(f)
         }}
-        onClose={(code) => {
+        onStartClose={() => setPush(0)}
+        onFullyClose={(code) => {
           setFuncConfig((p) => {
             p[funcInst.id].definition = code
           })
@@ -192,8 +219,12 @@ const DrawerTitle = styled.div`
 `
 
 const DrawerContent = styled.div`
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
 
   .ant-list {
     flex: 1 1 0;
@@ -201,6 +232,7 @@ const DrawerContent = styled.div`
 
   .obj-view-wrap {
     flex: 1 1 0;
+    height: 50%;
   }
 `
 

@@ -2,9 +2,9 @@ import React, { useEffect } from 'react'
 import { App as AntdApp, ConfigProvider, theme } from 'antd'
 import Content from '@/components/Content'
 import { createGlobalStyle } from 'styled-components'
-import { useTheme } from '@/components/ThemeProvider'
+import { useTheme } from '@/components/context/ThemeProvider'
 import zhCN from 'antd/locale/zh_CN'
-import { useFuncConfig } from '@/components/FuncConfigMapProvider'
+import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
 import { use$global } from '@/utils'
 
 const App: React.FC = () => {

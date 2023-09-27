@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react'
-import { FuncConfig, OperatorConfig, Processor, StrMap } from '@/types'
+import { FuncConfig, OperatorConfig, Processor, StrMap } from '@/types/types'
 import { getStorage, useUpdater } from '@/utils'
 
 type ContextType<C = StrMap<FuncConfig>> = {

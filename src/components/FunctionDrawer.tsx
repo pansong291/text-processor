@@ -1,28 +1,37 @@
 import React, { useEffect, useRef } from 'react'
-import { Button, Drawer } from 'antd'
-import MonacoEditor from '@/components/MonacoEditor'
-import { useTheme } from '@/components/ThemeProvider'
+import { Button } from 'antd'
+import MonacoEditor from '@/components/base/MonacoEditor'
+import { useTheme } from '@/components/context/ThemeProvider'
 import * as monaco from 'monaco-editor'
-import { useUpdater } from '@/utils'
-import { FuncInstance } from '@/types'
-import InputModal from '@/components/InputModal'
+import { updateLibs, useUpdater } from '@/utils'
+import { FuncInstance } from '@/types/types'
+import InputModal from '@/components/base/InputModal'
+import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
+import Drawer from '@/components/base/Drawer'
 
 type FunctionDrawerProps = {
   global?: boolean
   funcInstance: FuncInstance
   onChange: React.Dispatch<FuncInstance>
-  onClose: (code: string) => void
+  onStartClose?: () => void
+  onFullyClose: (code: string) => void
 }
 
 const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
   const { dark } = useTheme()
   const editor = useRef<monaco.editor.IStandaloneCodeEditor>(null)
+  const funcConfigContext = useFuncConfig()
   const { funcInstance: funcInst, onChange } = props
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
     if (props.funcInstance.definition) editor.current?.setValue(props.funcInstance.definition)
   }, [props.funcInstance.definition])
+
+  useEffect(
+    () => updateLibs(funcConfigContext.global, funcConfigContext.self, props.global ? null : funcInst.declaration),
+    [funcConfigContext.global, funcConfigContext.self, props.global, funcInst.declaration]
+  )
 
   return (
     <Drawer
@@ -36,7 +45,8 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
         </Button>
       }
       open={!!props.funcInstance.id}
-      onClose={() => props.onClose(editor.current?.getValue() || '')}>
+      onStartClose={props.onStartClose}
+      onFullyClose={() => props.onFullyClose(editor.current?.getValue() || '')}>
       <MonacoEditor ref={editor} style={{ height: '100%' }} options={{ theme: dark ? 'dark' : 'light' }} />
       <InputModal
         title={'修改函数信息'}

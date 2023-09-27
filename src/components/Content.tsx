@@ -1,15 +1,15 @@
 import React from 'react'
 import { App as AntdApp, Button, Modal, Typography } from 'antd'
-import { useTheme } from '@/components/ThemeProvider'
+import { useTheme } from '@/components/context/ThemeProvider'
 import { createProcedure, deleteStorage, getStorage, useUpdater } from '@/utils'
-import MoonIcon from '@/components/MoonIcon'
+import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
 import { DeleteOutlined, FormOutlined, FunctionOutlined, PlusOutlined } from '@ant-design/icons'
 import ProcedureDrawer from '@/components/ProcedureDrawer'
-import SortableListItem from '@/components/SortableListItem'
-import SortableList from '@/components/SortableList'
+import SortableListItem from '@/components/base/SortableListItem'
+import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
-import { ProcedureConfig, StorageKey } from '@/types'
+import { ProcedureConfig, StorageKey } from '@/types/types'
 
 const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', action: 'copy', operatorList: [] }
 
@@ -99,7 +99,7 @@ const Content: React.FC = () => {
           })
           setProcedure(pc)
         }}
-        onClose={() => setProcedure(BLANK_PROCEDURE)}
+        onFullyClose={() => setProcedure(BLANK_PROCEDURE)}
       />
     </ContentStyle>
   )

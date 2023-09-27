@@ -1,4 +1,4 @@
-import { FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types'
+import { FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/types'
 import * as monaco from 'monaco-editor'
 import React, { useState } from 'react'
 
@@ -726,7 +726,8 @@ export {}`
 /**
  * 更新编辑器的支持库
  */
-export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: StrMap<FuncDeclaration>, placeArgs = true) {
+export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: StrMap<FuncDeclaration>, elemType?: string | null) {
+  if (elemType !== null && !elemType) elemType = 'any'
   monaco.languages.typescript.javascriptDefaults.setExtraLibs([
     {
       content: [
@@ -744,12 +745,12 @@ export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: 
           .join('\n'),
         '    }',
         '  }',
-        placeArgs
+        elemType
           ? [
-              'let /** 数组中当前处理的字符串 */value:string,',
+              `let /** 数组中当前处理的元素 */value:${elemType},`,
               '/** 索引值 */index:number,',
-              '/** 字符串数组 */array:Array<string>;',
-              'const arguments:[string,number,Array<string>]=[value,index,array]'
+              `/** 元素数组 */array:Array<${elemType}>;`,
+              `const arguments:[${elemType},number,Array<${elemType}>]=[value,index,array]`
             ].join('\n')
           : '',
         '}',
