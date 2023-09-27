@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react'
-import { Button } from 'antd'
+import { App as AntdApp, Button } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
 import * as monaco from 'monaco-editor'
-import { updateLibs, useUpdater } from '@/utils'
+import { updateLibs, useUpdater, validateJavaScriptIdentifier } from '@/utils'
 import { FuncInstance } from '@/types/types'
 import InputModal from '@/components/base/InputModal'
 import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
@@ -18,6 +18,7 @@ type FunctionDrawerProps = {
 }
 
 const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
+  const { message } = AntdApp.useApp()
   const { dark } = useTheme()
   const editor = useRef<monaco.editor.IStandaloneCodeEditor>(null)
   const funcConfigContext = useFuncConfig()
@@ -63,8 +64,12 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
         ]}
         onClose={(v) => {
           if (v) {
-            // TODO 函数名称需要做校验
-            if (v[0]) funcInst.id = v[0]
+            const msg = validateJavaScriptIdentifier(v[0])
+            if (msg) {
+              message.error(msg)
+              return
+            }
+            funcInst.id = v[0]
             funcInst.declaration = v[1]
             funcInst.doc = v[2]
             onChange(funcInst)

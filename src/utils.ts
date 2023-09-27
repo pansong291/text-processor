@@ -903,3 +903,18 @@ export function useUpdater<S>(initialState?: S | (() => S)): [S | undefined, Rea
   const [state, setState] = useState(initialState)
   return [state, createUpdater(setState)]
 }
+
+export function validateJavaScriptIdentifier(ident: string): string | void {
+  if (!ident) return '函数名称不能为空'
+  if (/^\d.*$/.test(ident)) return '函数名称不允许数字字符开头'
+  if (/[^$\d\w]/.test(ident)) return '函数名称只允许英文字母、数字、下划线和 $ 符号'
+}
+
+export function execute(strList: Array<any>, funcList: Array<string>, stop?: string) {
+  const result = { data: strList }
+  for (const fn of funcList) {
+    result.data = result.data.flatMap(window.$self[fn])
+    if (fn === stop) break
+  }
+  return result.data
+}

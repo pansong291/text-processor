@@ -47,12 +47,10 @@ const errorRender =
 const isPrimitive = (value: any) => value === null || ['undefined', 'string', 'number', 'bigint', 'boolean', 'symbol'].includes(typeof value)
 
 const customRenderError = (data: any) => {
-  if (!isPrimitive(data))
-    Object.entries<any>(data).forEach(([k, v]) => {
-      if (Object.prototype.toString.call(v) === '[object Error]') v = Object.assign(v!, customValue(errorRender(v)))
-      else v = customRenderError(v)
-      data[k] = v
-    })
+  if (!isPrimitive(data)) {
+    if (Object.prototype.toString.call(data) === '[object Error]') return customValue(errorRender(data))
+    Object.entries<any>(data).forEach(([k, v]) => (data[k] = customRenderError(v)))
+  }
   return data
 }
 
@@ -68,6 +66,7 @@ const ObjectViewer: React.FC<ObjectViewerProps> = (props) => {
 }
 
 const ObjectViewStyle = styled.div`
+  width: 100%;
   min-height: 6.4em;
   overflow: auto;
 
@@ -87,6 +86,16 @@ const ObjectViewStyle = styled.div`
         & > label,
         & > span {
           display: none;
+        }
+      }
+
+      & > span {
+        & > label {
+          display: none;
+
+          & + span {
+            display: none;
+          }
         }
       }
 

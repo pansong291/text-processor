@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { App as AntdApp, Button, Modal } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import FunctionDrawer from '@/components/FunctionDrawer'
@@ -8,10 +8,11 @@ import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/base/InputModal'
 import styled from 'styled-components'
-import { createOperator, createUpdater, deleteStorage, getStorage, setStorage, useUpdater } from '@/utils'
+import { createOperator, createUpdater, deleteStorage, execute, getStorage, setStorage, useUpdater } from '@/utils'
 import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
 import ObjectViewer from '@/components/base/ObjectViewer'
 import Drawer from '@/components/base/Drawer'
+import TextArea from 'antd/es/input/TextArea'
 
 const BLANK_FUNC_INST: FuncInstance = { id: '', definition: '' }
 
@@ -27,6 +28,7 @@ TODO 待实现功能：
  1 正则匹配
  2 结束游标
  3 对象预览 已引入相关组件
+ 4 全局类型定义
  Drawer 目前存在 bug： 已解决
  关闭时，动画还未结束，里面的内容就已经清空了，有一瞬间可见的空白闪烁
  */
@@ -43,6 +45,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
   const setFuncConfig = props.global ? funcConfigContext.setGlobal : funcConfigContext.setSelf
   const [funcInst, setFuncInst] = useUpdater<FuncInstance>(BLANK_FUNC_INST)
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
+  const [testStr, setTestStr] = useUpdater('')
 
   const updateOperatorList = props.global
     ? setGlobalOperatorList
@@ -50,6 +53,17 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         procedure.operatorList = value instanceof Function ? value(procedure.operatorList) : value
         onChange(procedure)
       })
+
+  const testOutput = useMemo<any>(() => {
+    try {
+      return execute(
+        [testStr],
+        procedure.operatorList.map((o) => o.id)
+      )
+    } catch (e) {
+      return e
+    }
+  }, [testStr, procedure.operatorList])
 
   const onCloseDrawer = () => {
     props.onFullyClose()
@@ -143,37 +157,10 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
             </SortableListItem>
           )}
         />
-        <ObjectViewer
-          className="obj-view-wrap"
-          data={{
-            string: 'Every stop I make, I make a new friend.',
-            integer: 42,
-            map: new Map<string, any>([
-              ['foo', 1],
-              ['bar', { baz: null }]
-            ]),
-            url: 'http://localhost:3000',
-            array: [['a', 1], 1, Symbol('sym'), 'Mutley, you snickering, floppy eared hound.', { foo: 'nested' }, null],
-            float: 3.14159,
-            object: {
-              boolTrue: true,
-              emptySet: new Set()
-            },
-            boolFalse: false,
-            set: new Set([1, 'string', { foo: 1 }]),
-            date: new Date(),
-            reg: /^pattern\d+/gi,
-            async *asyncGenerator() {},
-            arrow: () => {},
-            anon: function () {},
-            undef: undefined,
-            baz: null,
-            sym: Symbol('sym'),
-            err: new Error('unknown'),
-            plain: 'foo: bar',
-            syit: Symbol.iterator
-          }}
-        />
+        <div className="right-wrap">
+          <TextArea autoSize={{ minRows: 2, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
+          <ObjectViewer className="obj-viewer" data={testOutput} />
+        </div>
       </DrawerContent>
       <FunctionDrawer
         global={props.global}
@@ -230,9 +217,14 @@ const DrawerContent = styled.div`
     flex: 1 1 0;
   }
 
-  .obj-view-wrap {
+  .right-wrap {
     flex: 1 1 0;
+  }
+
+  .obj-viewer {
     height: 50%;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
   }
 `
 
