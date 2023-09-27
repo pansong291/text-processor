@@ -29,6 +29,7 @@ const GlobalStyle = createGlobalStyle<{ mode: 'dark' | 'light' }>`
   body {
     --bg-color: var(--bg-color-${(props) => props.mode});
     --bg-color-inverse-rgb: var(--bg-color-inverse-${(props) => props.mode}-rgb);
+    --border-color: var(--border-color-${(props) => props.mode});
   }
 `
 

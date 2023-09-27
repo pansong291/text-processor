@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { App as AntdApp, Button, Modal } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import FunctionDrawer from '@/components/FunctionDrawer'
@@ -8,7 +8,7 @@ import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/base/InputModal'
 import styled from 'styled-components'
-import { createOperator, createUpdater, deleteStorage, execute, getStorage, setStorage, useUpdater } from '@/utils'
+import { createOperator, createUpdater, deleteStorage, execute, getStorage, setStorage, use$global, use$self, useUpdater } from '@/utils'
 import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
 import ObjectViewer from '@/components/base/ObjectViewer'
 import Drawer from '@/components/base/Drawer'
@@ -54,8 +54,14 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         onChange(procedure)
       })
 
+  const updateWindowFunctions = useCallback(() => {
+    if (props.global) use$global(funcConfigContext.global)
+    else use$self(funcConfigContext.self)
+  }, [props.global, funcConfigContext.global, funcConfigContext.self])
+
   const testOutput = useMemo<any>(() => {
     try {
+      updateWindowFunctions()
       return execute(
         [testStr],
         procedure.operatorList.map((o) => o.id)
@@ -63,7 +69,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
     } catch (e) {
       return e
     }
-  }, [testStr, procedure.operatorList])
+  }, [testStr, procedure.operatorList, updateWindowFunctions])
 
   const onCloseDrawer = () => {
     props.onFullyClose()
@@ -95,11 +101,11 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
             title="添加函数"
             onClick={() => {
               const operator = createOperator()
-              updateOperatorList((p) => {
-                p.push(operator)
-              })
               setFuncConfig((p) => {
                 p[operator.id] = { definition: '' }
+              })
+              updateOperatorList((p) => {
+                p.push(operator)
               })
             }}>
             <PlusOutlined />
@@ -136,15 +142,16 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
                       title: '删除函数',
                       content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
                       okType: 'danger',
+                      centered: true,
                       maskClosable: true,
                       afterClose: Modal.destroyAll,
                       onOk() {
                         deleteStorage(`$self-${item.id}`)
-                        updateOperatorList((p) => {
-                          if (p[i] === item) p.splice(i, 1)
-                        })
                         setFuncConfig((p) => {
                           delete p[item.id]
+                        })
+                        updateOperatorList((p) => {
+                          if (p[i] === item) p.splice(i, 1)
                         })
                       }
                     })
@@ -158,8 +165,10 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           )}
         />
         <div className="right-wrap">
-          <TextArea autoSize={{ minRows: 2, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
-          <ObjectViewer className="obj-viewer" data={testOutput} />
+          <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
+          <div className="obj-view-wrap">
+            <ObjectViewer className="obj-viewer" data={testOutput} />
+          </div>
         </div>
       </DrawerContent>
       <FunctionDrawer
@@ -169,6 +178,14 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           setFuncConfig((p) => {
             delete p[funcInst.id]
             p[f.id] = { definition: f.definition, declaration: f.declaration, doc: f.doc }
+          })
+          updateOperatorList((p) => {
+            const op = p.find((o) => o.id === funcInst.id)
+            if (op) {
+              op.id = f.id
+              op.declaration = f.declaration
+              op.doc = f.doc
+            }
           })
           setFuncInst(f)
         }}
@@ -185,13 +202,11 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
         with={300}
         inputs={[
           { label: '流程名称', maxLength: 30, value: modalValues[0] },
-          { label: '流程描述', maxLength: 200, value: modalValues[1] }
+          { textarea: true, label: '流程描述', maxLength: 200, autoSize: true, value: modalValues[1] }
         ]}
         onClose={(v) => {
           if (v) {
-            if (v[0]) procedure.name = v[0]
-            procedure.desc = v[1]
-            onChange(procedure)
+            onChange({ ...procedure, name: v[0] || procedure.name, desc: v[1] })
           }
           setModalValues([])
         }}
@@ -214,17 +229,25 @@ const DrawerContent = styled.div`
   gap: 16px;
 
   .ant-list {
-    flex: 1 1 0;
+    flex: 1 1 50%;
+
+    .ant-list-item {
+      padding: 6px 0 6px 12px;
+    }
   }
 
   .right-wrap {
-    flex: 1 1 0;
+    flex: 1 1 50%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .obj-viewer {
-    height: 50%;
-    border: 1px solid #d9d9d9;
+  .obj-view-wrap {
+    border: 1px solid var(--border-color);
     border-radius: 8px;
+    overflow: hidden;
   }
 `
 

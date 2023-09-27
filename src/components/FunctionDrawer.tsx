@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { App as AntdApp, Button } from 'antd'
+import { App as AntdApp, Button, Typography } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
 import * as monaco from 'monaco-editor'
@@ -26,7 +26,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
-    if (props.funcInstance.definition) editor.current?.setValue(props.funcInstance.definition)
+    editor.current?.setValue(props.funcInstance.definition || '')
   }, [props.funcInstance.definition])
 
   useEffect(
@@ -41,9 +41,14 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
       headerStyle={{ padding: '8px 16px' }}
       bodyStyle={{ padding: 0 }}
       title={
-        <Button type="text" size="small" onClick={() => setModalValues([funcInst.id, funcInst.declaration || '', funcInst.doc || ''])}>
-          {funcInst.id}
-        </Button>
+        <>
+          <Button type="text" size="small" onClick={() => setModalValues([funcInst.id, funcInst.declaration || '', funcInst.doc || ''])}>
+            function {funcInst.id}()
+          </Button>
+          <Typography.Text className="fw-normal" type="secondary" ellipsis={{ tooltip: { placement: 'bottomLeft' } }}>
+            {funcInst.doc}
+          </Typography.Text>
+        </>
       }
       open={!!props.funcInstance.id}
       onStartClose={props.onStartClose}
@@ -60,7 +65,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
             placeholder: props.global ? 'Function' : 'any',
             value: modalValues[1]
           },
-          { label: '函数描述', maxLength: 200, value: modalValues[2] }
+          { textarea: true, label: '函数描述', maxLength: 200, autoSize: true, value: modalValues[2] }
         ]}
         onClose={(v) => {
           if (v) {
@@ -69,10 +74,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
               message.error(msg)
               return
             }
-            funcInst.id = v[0]
-            funcInst.declaration = v[1]
-            funcInst.doc = v[2]
-            onChange(funcInst)
+            onChange({ id: v[0], declaration: v[1], doc: v[2], definition: funcInst.definition })
           }
           setModalValues([])
         }}

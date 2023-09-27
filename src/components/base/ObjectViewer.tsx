@@ -66,15 +66,18 @@ const ObjectViewer: React.FC<ObjectViewerProps> = (props) => {
 }
 
 const ObjectViewStyle = styled.div`
-  width: 100%;
+  padding: 0.5em 2em 0.5em 0;
+  display: flex;
+  flex-direction: column;
   min-height: 6.4em;
   overflow: auto;
 
-  & > main {
-    * {
-      white-space: nowrap;
-    }
+  & > * {
+    white-space: nowrap;
+    width: max-content;
+  }
 
+  & > main {
     li > div > i {
       opacity: 0.5 !important;
     }

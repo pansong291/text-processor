@@ -23,7 +23,7 @@ const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEdito
           monacoEl.current!,
           Object.assign(
             {
-              value: '// function(value: string, index: number, array: string[]): string | string[]\n\n\n\nreturn [value]',
+              value: '',
               language: 'javascript',
               automaticLayout: true,
               autoDetectHighContrast: false,

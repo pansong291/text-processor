@@ -69,6 +69,7 @@ const Content: React.FC = () => {
                     title: '删除流程',
                     content: `此操作无法撤销，确定要继续删除 ${item.name} 吗？`,
                     okType: 'danger',
+                    centered: true,
                     maskClosable: true,
                     afterClose: Modal.destroyAll,
                     onOk() {
