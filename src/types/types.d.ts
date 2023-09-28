@@ -9,6 +9,10 @@ type FuncDeclaration = {
 
 type Identifiable = { id: string }
 
+export type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+}
+
 export type StrMap<T> = Record<string, T>
 
 export type FuncConfig = FuncDeclaration & FuncDefinition
@@ -26,9 +30,9 @@ export type OperatorConfig = FuncDeclaration & Identifiable
 export type ProcedureConfig = {
   id: string
   name: string
-  desc?: string
-  match?: string
-  end?: string
+  desc: string
+  match: { regex: string; flags: string }
+  end: string
   action: 'copy' | 'type-input' | 'copy-paste'
   operatorList: Array<OperatorConfig>
 }

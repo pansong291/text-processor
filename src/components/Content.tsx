@@ -11,7 +11,15 @@ import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
 import { ProcedureConfig, StorageKey } from '@/types/types'
 
-const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', action: 'copy', operatorList: [] }
+const BLANK_PROCEDURE: ProcedureConfig = {
+  id: '',
+  name: '',
+  desc: '',
+  match: { regex: '', flags: '' },
+  end: '',
+  action: 'copy',
+  operatorList: []
+}
 
 const Content: React.FC = () => {
   const { modal } = AntdApp.useApp()

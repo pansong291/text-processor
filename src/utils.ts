@@ -1,4 +1,4 @@
-import { FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/types'
+import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/types'
 import * as monaco from 'monaco-editor'
 import React, { useState } from 'react'
 
@@ -867,7 +867,11 @@ export function createProcedure(old?: ProcedureConfig): ProcedureConfig {
     id,
     name: old?.name || id,
     desc: old?.desc || '',
-    match: old?.match || undefined,
+    match: {
+      regex: old?.match.regex || '',
+      flags: old?.match.flags || ''
+    },
+    end: old?.end || '',
     action: old?.action || 'copy',
     operatorList: old?.operatorList?.map?.((o) => createOperator(o)) || []
   }
@@ -917,4 +921,34 @@ export function execute(strList: Array<any>, funcList: Array<string>, stop?: str
     if (fn === stop) break
   }
   return result.data
+}
+
+export function createSimpleOptions(values: Array<string>) {
+  return values.map((v) => ({ label: v, value: v }))
+}
+
+function mergeObjects<T>(obj: T, partial: DeepPartial<T>): T {
+  if (typeof obj !== 'object' || obj === null || typeof partial !== 'object' || partial === null) {
+    return obj
+  }
+
+  for (const key in partial) {
+    if (partial.hasOwnProperty(key)) {
+      const partVal: any = partial[key]
+      if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && typeof partVal === 'object') {
+        obj[key] = mergeObjects(obj[key], partVal)
+      } else {
+        obj[key] = partVal
+      }
+    }
+  }
+
+  return obj
+}
+
+export function deepMerge<T>(obj: T, ...partials: DeepPartial<T>[]): T {
+  for (const partial of partials) {
+    obj = mergeObjects(obj, partial)
+  }
+  return obj
 }

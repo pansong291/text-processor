@@ -23,7 +23,7 @@ const SortableListItem: React.FC<SortableListItemProps> = ({ children, id, style
         ...(isDragging ? { position: 'relative', zIndex: 9999 } : {})
       }}
       {...attributes}>
-      <ListItemContent>
+      <ListItemContent className="sortable-list-item-content">
         <MenuOutlined ref={setActivatorNodeRef} style={{ touchAction: 'none', cursor: 'move' }} {...listeners} />
         {children}
       </ListItemContent>

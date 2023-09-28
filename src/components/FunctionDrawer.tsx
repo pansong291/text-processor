@@ -10,28 +10,27 @@ import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
 import Drawer from '@/components/base/Drawer'
 
 type FunctionDrawerProps = {
-  global?: boolean
+  isGlobal?: boolean
   funcInstance: FuncInstance
   onChange: React.Dispatch<FuncInstance>
   onStartClose?: () => void
-  onFullyClose: (code: string) => void
+  onFullyClose: () => void
 }
 
-const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
+const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance: funcInst, onChange, onStartClose, onFullyClose }) => {
   const { message } = AntdApp.useApp()
   const { dark } = useTheme()
   const editor = useRef<monaco.editor.IStandaloneCodeEditor>(null)
   const funcConfigContext = useFuncConfig()
-  const { funcInstance: funcInst, onChange } = props
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
-    editor.current?.setValue(props.funcInstance.definition || '')
-  }, [props.funcInstance.definition])
+    editor.current?.setValue(funcInst.definition || '')
+  }, [funcInst.definition])
 
   useEffect(
-    () => updateLibs(funcConfigContext.global, funcConfigContext.self, props.global ? null : funcInst.declaration),
-    [funcConfigContext.global, funcConfigContext.self, props.global, funcInst.declaration]
+    () => updateLibs(funcConfigContext.global, funcConfigContext.self, isGlobal ? null : funcInst.declaration),
+    [funcConfigContext.global, funcConfigContext.self, isGlobal, funcInst.declaration]
   )
 
   return (
@@ -50,9 +49,13 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
           </Typography.Text>
         </>
       }
-      open={!!props.funcInstance.id}
-      onStartClose={props.onStartClose}
-      onFullyClose={() => props.onFullyClose(editor.current?.getValue() || '')}>
+      open={!!funcInst.id}
+      onStartClose={() => {
+        /* 重要：必须在关闭动画前更新代码；如果在关闭动画之后更新会由于 state 的惰更新机制导致缺少必要的渲染 */
+        onChange({ ...funcInst, definition: editor.current?.getValue() || '' })
+        onStartClose?.()
+      }}
+      onFullyClose={onFullyClose}>
       <MonacoEditor ref={editor} style={{ height: '100%' }} options={{ theme: dark ? 'dark' : 'light' }} />
       <InputModal
         title={'修改函数信息'}
@@ -60,9 +63,9 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = (props) => {
         inputs={[
           { label: '函数名', maxLength: 30, value: modalValues[0] },
           {
-            label: props.global ? '函数声明' : '元素类型',
+            label: isGlobal ? '函数声明' : '元素类型',
             maxLength: 200,
-            placeholder: props.global ? 'Function' : 'any',
+            placeholder: isGlobal ? 'Function' : 'any',
             value: modalValues[1]
           },
           { textarea: true, label: '函数描述', maxLength: 200, autoSize: true, value: modalValues[2] }

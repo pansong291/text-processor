@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { App as AntdApp, Button, Modal } from 'antd'
+import { App as AntdApp, Button, Form, Input, Modal, Select, Space } from 'antd'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import FunctionDrawer from '@/components/FunctionDrawer'
 import SortableList from '@/components/base/SortableList'
@@ -8,7 +8,19 @@ import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/types'
 import { arrayMove } from '@dnd-kit/sortable'
 import InputModal from '@/components/base/InputModal'
 import styled from 'styled-components'
-import { createOperator, createUpdater, deleteStorage, execute, getStorage, setStorage, use$global, use$self, useUpdater } from '@/utils'
+import {
+  createOperator,
+  createSimpleOptions,
+  createUpdater,
+  deepMerge,
+  deleteStorage,
+  execute,
+  getStorage,
+  setStorage,
+  use$global,
+  use$self,
+  useUpdater
+} from '@/utils'
 import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
 import ObjectViewer from '@/components/base/ObjectViewer'
 import Drawer from '@/components/base/Drawer'
@@ -17,7 +29,7 @@ import TextArea from 'antd/es/input/TextArea'
 const BLANK_FUNC_INST: FuncInstance = { id: '', definition: '' }
 
 type ProcedureDrawerProps = {
-  global?: boolean
+  isGlobal?: boolean
   procedure: ProcedureConfig
   onChange: React.Dispatch<ProcedureConfig>
   onFullyClose: () => void
@@ -29,25 +41,22 @@ TODO 待实现功能：
  2 结束游标
  3 对象预览 已引入相关组件
  4 全局类型定义
- Drawer 目前存在 bug： 已解决
- 关闭时，动画还未结束，里面的内容就已经清空了，有一瞬间可见的空白闪烁
  */
 
-const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
+const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, onChange, onFullyClose }) => {
   const { modal } = AntdApp.useApp()
   const [push, setPush] = useUpdater(0)
-  const { procedure, onChange } = props
   const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
     () => getStorage('global-operator-list')?.map?.((o: OperatorConfig) => createOperator(o)) || []
   )
   const funcConfigContext = useFuncConfig()
-  const funcConfig = props.global ? funcConfigContext.global : funcConfigContext.self
-  const setFuncConfig = props.global ? funcConfigContext.setGlobal : funcConfigContext.setSelf
+  const funcConfig = isGlobal ? funcConfigContext.global : funcConfigContext.self
+  const setFuncConfig = isGlobal ? funcConfigContext.setGlobal : funcConfigContext.setSelf
   const [funcInst, setFuncInst] = useUpdater<FuncInstance>(BLANK_FUNC_INST)
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
   const [testStr, setTestStr] = useUpdater('')
 
-  const updateOperatorList = props.global
+  const updateOperatorList = isGlobal
     ? setGlobalOperatorList
     : createUpdater<Array<OperatorConfig>>((value) => {
         procedure.operatorList = value instanceof Function ? value(procedure.operatorList) : value
@@ -55,25 +64,26 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       })
 
   const updateWindowFunctions = useCallback(() => {
-    if (props.global) use$global(funcConfigContext.global)
+    if (isGlobal) use$global(funcConfigContext.global)
     else use$self(funcConfigContext.self)
-  }, [props.global, funcConfigContext.global, funcConfigContext.self])
+  }, [isGlobal, funcConfigContext.global, funcConfigContext.self])
 
   const testOutput = useMemo<any>(() => {
     try {
       updateWindowFunctions()
       return execute(
         [testStr],
-        procedure.operatorList.map((o) => o.id)
+        procedure.operatorList.map((o) => o.id),
+        procedure.end
       )
     } catch (e) {
       return e
     }
-  }, [testStr, procedure.operatorList, updateWindowFunctions])
+  }, [testStr, procedure.operatorList, procedure.end, updateWindowFunctions])
 
   const onCloseDrawer = () => {
-    props.onFullyClose()
-    if (!props.global) {
+    onFullyClose()
+    if (!isGlobal) {
       return
     }
     setStorage('global-operator-list', globalOperatorList)
@@ -93,7 +103,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
       headerStyle={{ padding: '8px 16px' }}
       title={
         <DrawerTitle>
-          <Button type="text" size="small" onClick={() => setModalValues([procedure.name, procedure.desc || ''])}>
+          <Button type="text" size="small" onClick={() => setModalValues([procedure.name, procedure.desc])}>
             {procedure.name}
           </Button>
           <button
@@ -112,67 +122,99 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           </button>
         </DrawerTitle>
       }
-      open={!!props.procedure.id}
+      open={!!procedure.id}
       onFullyClose={onCloseDrawer}>
       <DrawerContent>
-        <SortableList
-          bordered
-          rowKey="id"
-          dataSource={procedure.operatorList}
-          onSort={(active, over) => {
-            updateOperatorList((p) => {
-              const from = p.findIndex((i) => i.id === active)
-              const to = p.findIndex((i) => i.id === over)
-              return arrayMove(p, from, to)
-            })
-          }}
-          renderItem={(item, i) => (
-            <SortableListItem
-              id={item.id}
-              actions={[
-                <Button type="text" size="small" title="编辑" icon={<FormOutlined />} onClick={() => onEditClick(item)} />,
-                <Button
-                  type="text"
-                  size="small"
-                  danger
-                  title="删除"
-                  icon={<DeleteOutlined />}
-                  onClick={() => {
-                    modal.confirm({
-                      title: '删除函数',
-                      content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
-                      okType: 'danger',
-                      centered: true,
-                      maskClosable: true,
-                      afterClose: Modal.destroyAll,
-                      onOk() {
-                        deleteStorage(`$self-${item.id}`)
-                        setFuncConfig((p) => {
-                          delete p[item.id]
-                        })
-                        updateOperatorList((p) => {
-                          if (p[i] === item) p.splice(i, 1)
-                        })
-                      }
-                    })
+        <div className="left-wrap">
+          <SortableList
+            bordered
+            rowKey="id"
+            dataSource={procedure.operatorList}
+            onSort={(active, over) => {
+              updateOperatorList((p) => {
+                const from = p.findIndex((i) => i.id === active)
+                const to = p.findIndex((i) => i.id === over)
+                return arrayMove(p, from, to)
+              })
+            }}
+            renderItem={(item, i) => (
+              <SortableListItem
+                id={item.id}
+                actions={[
+                  <Button type="text" size="small" title="编辑" icon={<FormOutlined />} onClick={() => onEditClick(item)} />,
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    title="删除"
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      modal.confirm({
+                        title: '删除函数',
+                        content: `此操作无法撤销，确定要继续删除 ${item.id} 吗？`,
+                        okType: 'danger',
+                        centered: true,
+                        maskClosable: true,
+                        afterClose: Modal.destroyAll,
+                        onOk() {
+                          deleteStorage(`$self-${item.id}`)
+                          setFuncConfig((p) => {
+                            delete p[item.id]
+                          })
+                          updateOperatorList((p) => {
+                            if (p[i] === item) p.splice(i, 1)
+                          })
+                        }
+                      })
+                    }}
+                  />
+                ]}>
+                <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
+                  {item.id}
+                </Button>
+              </SortableListItem>
+            )}
+          />
+          <Form>
+            <Form.Item label="正则匹配">
+              <Space.Compact>
+                <Input
+                  prefix="/"
+                  suffix="/"
+                  value={procedure.match.regex}
+                  onChange={(v) => onChange(deepMerge({ ...procedure }, { match: { regex: v.target.value } }))}
+                />
+                <Input
+                  style={{ width: '8em' }}
+                  value={procedure.match.flags}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (!value || /^(?!.*(.).*\1)[igmuy]+$/.test(value)) onChange(deepMerge({ ...procedure }, { match: { flags: value } }))
                   }}
                 />
-              ]}>
-              <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
-                {item.id}
-              </Button>
-            </SortableListItem>
-          )}
-        />
+              </Space.Compact>
+            </Form.Item>
+            <Form.Item label="终止游标">
+              <Select
+                allowClear={true}
+                showSearch
+                value={procedure.end}
+                options={createSimpleOptions(procedure.operatorList.map((o) => o.id))}
+                onChange={(v) => onChange({ ...procedure, end: v })}
+              />
+            </Form.Item>
+          </Form>
+        </div>
         <div className="right-wrap">
           <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
           <div className="obj-view-wrap">
             <ObjectViewer className="obj-viewer" data={testOutput} />
           </div>
+          <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={testOutput?.join?.('') ?? String(testOutput)} readOnly={true} />
         </div>
       </DrawerContent>
       <FunctionDrawer
-        global={props.global}
+        isGlobal={isGlobal}
         funcInstance={funcInst}
         onChange={(f) => {
           setFuncConfig((p) => {
@@ -190,12 +232,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
           setFuncInst(f)
         }}
         onStartClose={() => setPush(0)}
-        onFullyClose={(code) => {
-          setFuncConfig((p) => {
-            p[funcInst.id].definition = code
-          })
-          setFuncInst(BLANK_FUNC_INST)
-        }}
+        onFullyClose={() => setFuncInst(BLANK_FUNC_INST)}
       />
       <InputModal
         title={'修改流程信息'}
@@ -222,18 +259,31 @@ const DrawerTitle = styled.div`
 
 const DrawerContent = styled.div`
   width: 100%;
-  height: 100%;
+  height: max-content;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
 
-  .ant-list {
+  .left-wrap {
     flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 
+  .ant-list {
     .ant-list-item {
       padding: 6px 0 6px 12px;
     }
+
+    .sortable-list-item-content {
+      gap: 8px;
+    }
+  }
+
+  .ant-form-item {
+    margin-bottom: 16px;
   }
 
   .right-wrap {
