@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react'
 import { App as AntdApp, Button, Typography } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
-import * as monaco from 'monaco-editor'
 import { updateLibs, useUpdater, validateJavaScriptIdentifier } from '@/utils'
-import { FuncInstance } from '@/types/types'
+import { FuncInstance } from '@/types/base'
 import InputModal from '@/components/base/InputModal'
-import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
+import { useFuncConfig } from '@/components/context/StorageProvider'
 import Drawer from '@/components/base/Drawer'
+import * as monaco from 'monaco-editor'
 
 type FunctionDrawerProps = {
   isGlobal?: boolean
@@ -25,8 +25,9 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance:
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
+    console.log('editor.current?.setValue', editor.current)
     editor.current?.setValue(funcInst.definition || '')
-  }, [funcInst.definition])
+  }, [editor.current, funcInst.definition])
 
   useEffect(
     () => updateLibs(funcConfigContext.global, funcConfigContext.self, isGlobal ? null : funcInst.declaration),

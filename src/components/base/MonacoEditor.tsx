@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+import * as monaco from 'monaco-editor'
 import { useUpdater } from '@/utils'
 
 type MonacoEditorProps = {
@@ -15,7 +15,7 @@ const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEdito
   useImperativeHandle(ref, () => editor!, [editor])
 
   useEffect(() => {
-    if (monacoEl?.current) {
+    if (monacoEl.current) {
       setEditor((e) => {
         if (e) return e
 
@@ -52,14 +52,12 @@ const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEdito
         )
       })
     }
-
-    return () => editor?.dispose()
   }, [monacoEl.current])
 
   useEffect(() => {
     if (!editor || !props.options) return
     editor.updateOptions(props.options)
-  }, [props.options])
+  }, [editor, props.options])
 
   return <div className={props.className} style={props.style} ref={monacoEl} />
 })

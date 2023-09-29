@@ -1,7 +1,7 @@
 import React from 'react'
-import { App as AntdApp, Button, Modal, Typography } from 'antd'
+import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { createProcedure, deleteStorage, getStorage, useUpdater } from '@/utils'
+import { createProcedure, deleteStorage, useUpdater } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
 import { DeleteOutlined, FormOutlined, FunctionOutlined, PlusOutlined } from '@ant-design/icons'
@@ -9,24 +9,23 @@ import ProcedureDrawer from '@/components/ProcedureDrawer'
 import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
-import { ProcedureConfig, StorageKey } from '@/types/types'
+import { OutputAction, ProcedureConfig, StorageKey } from '@/types/base'
+import { useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
 
-const BLANK_PROCEDURE: ProcedureConfig = {
-  id: '',
-  name: '',
-  desc: '',
-  match: { regex: '', flags: '' },
-  end: '',
-  action: 'copy',
-  operatorList: []
-}
+const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', desc: '', match: {}, exclude: {}, end: '', operatorList: [] }
+
+const outputActionOptions: SegmentedProps['options'] = [
+  { label: '仅复制', value: 'copy' },
+  { label: '复制粘贴', value: 'copy-paste' },
+  { label: '仅输入', value: 'type-input' }
+]
 
 const Content: React.FC = () => {
   const { modal } = AntdApp.useApp()
   const { dark, setDark } = useTheme()
-  const [procedureList, setProcedureList] = useUpdater<Array<ProcedureConfig>>(
-    () => getStorage('procedure-list')?.map?.((p: ProcedureConfig) => createProcedure(p)) || []
-  )
+  const { outputAction, setOutputAction } = useOutputAction()
+  const { procedureList, setProcedureList } = useProcedureList()
+  const [isGlobal, setIsGlobal] = useUpdater(false)
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
 
   const onEditClick = (item: ProcedureConfig) => {
@@ -36,19 +35,24 @@ const Content: React.FC = () => {
   return (
     <ContentStyle>
       <div className="title-line">
-        <Button
-          type="primary"
-          shape="circle"
-          title="添加流程"
-          icon={<PlusOutlined />}
-          onClick={() =>
-            setProcedureList((p) => {
-              p.push(createProcedure())
-            })
-          }
-        />
-        <Button type="default" shape="circle" title="全局函数" icon={<FunctionOutlined />} />
-        <Button type={dark ? 'primary' : 'default'} shape="circle" title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
+        <Form.Item label="输出模式">
+          <Segmented options={outputActionOptions} value={outputAction} onChange={(v) => setOutputAction(v as OutputAction)} />
+        </Form.Item>
+        <div className="action-btn-wrap">
+          <Button
+            type="primary"
+            shape="circle"
+            title="添加流程"
+            icon={<PlusOutlined />}
+            onClick={() =>
+              setProcedureList((p) => {
+                p.push(createProcedure())
+              })
+            }
+          />
+          <Button type="default" shape="circle" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
+          <Button type={dark ? 'primary' : 'default'} shape="circle" title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
+        </div>
       </div>
       <SortableList
         bordered
@@ -100,6 +104,7 @@ const Content: React.FC = () => {
         )}
       />
       <ProcedureDrawer
+        isGlobal={isGlobal}
         procedure={procedure}
         onChange={(pc) => {
           setProcedureList((p) => {
@@ -108,7 +113,10 @@ const Content: React.FC = () => {
           })
           setProcedure(pc)
         }}
-        onFullyClose={() => setProcedure(BLANK_PROCEDURE)}
+        onFullyClose={() => {
+          setIsGlobal(false)
+          setProcedure(BLANK_PROCEDURE)
+        }}
       />
     </ContentStyle>
   )
@@ -122,8 +130,16 @@ const ContentStyle = styled.div`
 
   .title-line {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+    justify-content: space-between;
+
+    .ant-form-item {
+      margin-bottom: 0;
+    }
+
+    .action-btn-wrap {
+      display: flex;
+      gap: 8px;
+    }
   }
 `
 

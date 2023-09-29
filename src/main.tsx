@@ -1,18 +1,20 @@
-import React from 'react'
+// import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from '@/App'
+// import App from '@/App'
 import './user-worker'
 import './main.scss'
-import ThemeProvider from '@/components/context/ThemeProvider'
-import FuncConfigMapProvider from '@/components/context/FuncConfigMapProvider'
+// import ThemeProvider from '@/components/context/ThemeProvider'
+// import StorageProvider from '@/components/context/StorageProvider'
+import Parent from '@/types/Parent'
 
 window.$self = {}
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <FuncConfigMapProvider>
-        <App />
-      </FuncConfigMapProvider>
-    </ThemeProvider>
-  </React.StrictMode>
+  // <React.StrictMode>
+  //   <ThemeProvider>
+  //     <StorageProvider>
+  //       <App />
+  <Parent />
+  // </StorageProvider>
+  // </ThemeProvider>
+  // </React.StrictMode>
 )

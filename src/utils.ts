@@ -1,4 +1,4 @@
-import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/types'
+import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/base'
 import * as monaco from 'monaco-editor'
 import React, { useState } from 'react'
 
@@ -752,7 +752,7 @@ export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: 
               `/** 元素数组 */array:Array<${elemType}>;`,
               `const arguments:[${elemType},number,Array<${elemType}>]=[value,index,array]`
             ].join('\n')
-          : '',
+          : 'const arguments: any[]',
         '}',
         'export {}'
       ]
@@ -871,8 +871,11 @@ export function createProcedure(old?: ProcedureConfig): ProcedureConfig {
       regex: old?.match.regex || '',
       flags: old?.match.flags || ''
     },
+    exclude: {
+      regex: old?.exclude.regex || '',
+      flags: old?.exclude.flags || ''
+    },
     end: old?.end || '',
-    action: old?.action || 'copy',
     operatorList: old?.operatorList?.map?.((o) => createOperator(o)) || []
   }
 }
@@ -914,8 +917,8 @@ export function validateJavaScriptIdentifier(ident: string): string | void {
   if (/[^$\d\w]/.test(ident)) return '函数名称只允许英文字母、数字、下划线和 $ 符号'
 }
 
-export function execute(strList: Array<any>, funcList: Array<string>, stop?: string) {
-  const result = { data: strList }
+export function execute(input: any, funcList: Array<string>, stop?: string) {
+  const result = { data: [input] }
   for (const fn of funcList) {
     result.data = result.data.flatMap(window.$self[fn])
     if (fn === stop) break
@@ -951,4 +954,13 @@ export function deepMerge<T>(obj: T, ...partials: DeepPartial<T>[]): T {
     obj = mergeObjects(obj, partial)
   }
   return obj
+}
+
+export function createUtoolsFeature(procedure: Pick<ProcedureConfig, 'id' | 'name' | 'desc'>): any {
+  return {
+    code: procedure.id,
+    explain: procedure.desc || procedure.id,
+    platform: ['darwin', 'win32', 'linux'],
+    cmds: [{ type: 'over', label: procedure.name }]
+  }
 }

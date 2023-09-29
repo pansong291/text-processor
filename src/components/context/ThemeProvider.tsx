@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react'
 import { useUpdater } from '@/utils'
-import { Processor } from '@/types/types'
+import { Processor } from '@/types/base'
 
 const ThemeContext = createContext<{ dark: boolean; setDark: React.Dispatch<Processor<boolean>> }>({
   dark: false,

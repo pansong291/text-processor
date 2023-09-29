@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Form, Input, InputProps, Modal } from 'antd'
 import { useUpdater } from '@/utils'
 import { TextAreaProps } from 'antd/es/input'
@@ -15,7 +15,7 @@ const InputModal: React.FC<InputModalProps> = (props) => {
   const propValues = useMemo<Array<string>>(() => props.inputs.map((i) => i.value as string), props.inputs)
   const open = useMemo(() => !!props.inputs.find((i) => i.value), props.inputs)
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     setValues(propValues)
   }, [propValues])
 

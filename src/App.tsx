@@ -4,7 +4,7 @@ import Content from '@/components/Content'
 import { createGlobalStyle } from 'styled-components'
 import { useTheme } from '@/components/context/ThemeProvider'
 import zhCN from 'antd/locale/zh_CN'
-import { useFuncConfig } from '@/components/context/FuncConfigMapProvider'
+import { useFuncConfig } from '@/components/context/StorageProvider'
 import { use$global } from '@/utils'
 
 const App: React.FC = () => {

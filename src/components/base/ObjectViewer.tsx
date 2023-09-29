@@ -58,9 +58,17 @@ const ObjectViewer: React.FC<ObjectViewerProps> = (props) => {
   const { dark } = useTheme()
   const palette = dark ? darkTheme : lightTheme
 
+  const catchError = () => {
+    try {
+      return customRenderError(props.data)
+    } catch (e) {
+      return customRenderError(e)
+    }
+  }
+
   return (
     <ObjectViewStyle className={props.className} style={{ ...props.style, backgroundColor: palette.base00 }}>
-      <ObjectView data={{ data: customRenderError(props.data) }} styles={{ fontFamily: 'var(--font-family-mono)' }} palette={palette} />
+      <ObjectView data={{ data: catchError() }} styles={{ fontFamily: 'var(--font-family-mono)' }} palette={palette} />
     </ObjectViewStyle>
   )
 }
