@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import { App as AntdApp, Button, Typography } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
@@ -20,14 +20,14 @@ type FunctionDrawerProps = {
 const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance: funcInst, onChange, onStartClose, onFullyClose }) => {
   const { message } = AntdApp.useApp()
   const { dark } = useTheme()
-  const editor = useRef<monaco.editor.IStandaloneCodeEditor>(null)
+  const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor>()
   const funcConfigContext = useFuncConfig()
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
-    console.log('editor.current?.setValue', editor.current)
-    editor.current?.setValue(funcInst.definition || '')
-  }, [editor.current, funcInst.definition])
+    console.log('editor.current?.setValue', editor)
+    editor?.setValue(funcInst.definition || '')
+  }, [editor, funcInst.definition])
 
   useEffect(
     () => updateLibs(funcConfigContext.global, funcConfigContext.self, isGlobal ? null : funcInst.declaration),
@@ -53,11 +53,11 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance:
       open={!!funcInst.id}
       onStartClose={() => {
         /* 重要：必须在关闭动画前更新代码；如果在关闭动画之后更新会由于 state 的惰更新机制导致缺少必要的渲染 */
-        onChange({ ...funcInst, definition: editor.current?.getValue() || '' })
+        onChange({ ...funcInst, definition: editor?.getValue() || '' })
         onStartClose?.()
       }}
       onFullyClose={onFullyClose}>
-      <MonacoEditor ref={editor} style={{ height: '100%' }} options={{ theme: dark ? 'dark' : 'light' }} />
+      <MonacoEditor onLoaded={setEditor} style={{ height: '100%' }} options={{ theme: dark ? 'dark' : 'light' }} />
       <InputModal
         title={'修改函数信息'}
         with={300}

@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
 import { useUpdater } from '@/utils'
 
@@ -6,13 +6,14 @@ type MonacoEditorProps = {
   className?: string
   style?: React.CSSProperties
   options?: monaco.editor.IEditorOptions & monaco.editor.IGlobalEditorOptions
+  onLoaded: (editor?: monaco.editor.IStandaloneCodeEditor) => void
 }
 
-const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEditorProps>((props, ref) => {
-  const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor | null>(null)
+const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
+  const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor>()
   const monacoEl = useRef<HTMLDivElement | null>(null)
 
-  useImperativeHandle(ref, () => editor!, [editor])
+  useEffect(() => props.onLoaded(editor), [editor, props.onLoaded])
 
   useEffect(() => {
     if (monacoEl.current) {
@@ -60,6 +61,6 @@ const MonacoEditor = forwardRef<monaco.editor.IStandaloneCodeEditor, MonacoEdito
   }, [editor, props.options])
 
   return <div className={props.className} style={props.style} ref={monacoEl} />
-})
+}
 
 export default MonacoEditor
