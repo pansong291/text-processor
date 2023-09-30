@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor'
+import { monaco } from '@/lib/monaco'
 // @ts-ignore
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 // @ts-ignore

@@ -1,5 +1,5 @@
 import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/base'
-import * as monaco from 'monaco-editor'
+import { monaco } from '@/lib/monaco'
 import React, { useState } from 'react'
 
 export const utoolsLib = {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import * as monaco from 'monaco-editor'
+import { monaco } from '@/lib/monaco'
 import { useUpdater } from '@/utils'
 
 type MonacoEditorProps = {

@@ -7,7 +7,7 @@ import { FuncInstance } from '@/types/base'
 import InputModal from '@/components/base/InputModal'
 import { useFuncConfig } from '@/components/context/StorageProvider'
 import Drawer from '@/components/base/Drawer'
-import * as monaco from 'monaco-editor'
+import { monaco } from '@/lib/monaco'
 
 type FunctionDrawerProps = {
   isGlobal?: boolean
