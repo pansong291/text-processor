@@ -12,7 +12,7 @@ export default defineConfig({
           [
             'babel-plugin-styled-components',
             {
-              displayName: false,
+              displayName: true,
               fileName: false
             }
           ]
