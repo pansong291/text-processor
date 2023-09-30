@@ -124,7 +124,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                 title="添加函数"
                 onClick={() => {
                   const operator = createOperator()
-                  setStorage(`$self-${operator.id}`, '')
+                  setStorage(`$self-${procedure.id}-${operator.id}`, '')
                   setSelfFuncConfigMap((p) => {
                     p[operator.id] = { definition: '' }
                   })
@@ -168,7 +168,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                       maskClosable: true,
                       afterClose: Modal.destroyAll,
                       onOk() {
-                        deleteStorage(`$self-${item.id}`)
+                        deleteStorage(`$self-${procedure.id}-${item.id}`)
                         setSelfFuncConfigMap((p) => {
                           delete p[item.id]
                         })

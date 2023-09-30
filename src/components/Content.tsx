@@ -33,7 +33,7 @@ const Content: React.FC = () => {
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
 
   const onEditClick = (item: ProcedureConfig) => {
-    setSelfFuncConfigMap(getConfigMap('self', item.operatorList))
+    setSelfFuncConfigMap(getConfigMap(`self-${item.id}`, item.operatorList))
     setProcedure(item)
   }
 
@@ -60,7 +60,7 @@ const Content: React.FC = () => {
         return
       }
 
-      use$self(getConfigMap('self', procedure.operatorList))
+      use$self(getConfigMap(`self-${procedure.id}`, procedure.operatorList))
       try {
         const result = String(
           execute(
@@ -142,7 +142,7 @@ const Content: React.FC = () => {
                     maskClosable: true,
                     afterClose: Modal.destroyAll,
                     onOk() {
-                      deleteStorage(...item.operatorList.map<StorageKey>((o) => `$self-${o.id}`))
+                      deleteStorage(...item.operatorList.map<StorageKey>((o) => `$self-${item.id}-${o.id}`))
                       window.utools?.removeFeature(item.id)
                       setProcedureList((p) => {
                         if (p[i] === item) p.splice(i, 1)

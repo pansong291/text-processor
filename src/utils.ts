@@ -973,6 +973,6 @@ export function createUtoolsFeature(procedure: Pick<ProcedureConfig, 'id' | 'nam
     code: procedure.id,
     explain: procedure.desc || procedure.id,
     platform: ['darwin', 'win32', 'linux'],
-    cmds: [{ type: 'over', label: procedure.name }]
+    cmds: [{ type: 'over', label: procedure.name, maxLength: 999999999 }]
   }
 }

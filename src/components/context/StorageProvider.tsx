@@ -90,13 +90,13 @@ export const useProcedureList = () => useContext(ProcedureListContext)
 
 export const useFuncConfig = () => useContext(FuncConfigMapContext)
 
-export const getConfigMap = (type: 'global' | 'self', operatorList: Array<OperatorConfig>) => {
+export const getConfigMap = (type: 'global' | `self-${string}`, operatorList: Array<OperatorConfig>) => {
   const configMap: StrMap<FuncConfig> = {}
   operatorList?.forEach((oc) => {
     configMap[oc.id] = {
       declaration: oc.declaration,
       doc: oc.doc,
-      definition: String(getStorage(`$${type}-${oc.id}`) || defaultFuncDefinition(type, oc.id))
+      definition: String(getStorage(`$${type}-${oc.id}`) || defaultFuncDefinition(type === 'global', oc.id))
     }
   })
   return configMap
@@ -129,46 +129,43 @@ function defaultProcedureList(): Array<ProcedureConfig> {
   ]
 }
 
-function defaultFuncDefinition(type: 'global' | 'self', id: string): string {
-  switch (type) {
-    case 'global':
-      switch (id) {
-        case 'joinBy':
-          return "const [[, index, array], separator = ''] = arguments\nreturn index === 0 ? array.join(separator) : []"
-      }
-      break
-    case 'self':
-      switch (id) {
-        case 'splitByReg':
-          return [
-            '/**',
-            ' * 函数声明为',
-            ' * <T>(value: T, index: number, array: T[]) => T | T[]',
-            ' * 可用入参为 value, number, array 以及 arguments',
-            '*/',
-            'return value.split(/[^a-zA-Z0-9]+/)'
-          ].join('\n')
-        case 'double':
-          return 'return [value, value]'
-        case 'thirdAdd1':
-          return 'return index % 3 === 2 ? value + 1 : value'
-        case 'distinct':
-          return [
-            'const { sets = new Set() } = array',
-            'array.sets = sets',
-            'if (sets.has(value)) {',
-            '    // 返回空数组表示移除当前 value',
-            '    return []',
-            '}',
-            'sets.add(value)',
-            'return value'
-          ].join('\n')
-        case 'useSelf':
-          return ['/**', ' * 当前流程中的函数会被挂载到 window 的 $self 对象上', ' */', 'return this.$self.thirdAdd1(value, index)'].join('\n')
-        case 'useGlobal':
-          return ['/**', ' * 全局函数会被挂载到 window 的 $global 对象上', ' */', "return this.$global.joinBy(arguments, '_')"].join('\n')
-      }
-      break
+function defaultFuncDefinition(isGlobal: boolean, id: string): string {
+  if (isGlobal) {
+    switch (id) {
+      case 'joinBy':
+        return "const [[, index, array], separator = ''] = arguments\nreturn index === 0 ? array.join(separator) : []"
+    }
+  } else {
+    switch (id) {
+      case 'splitByReg':
+        return [
+          '/**',
+          ' * 函数声明为',
+          ' * <T>(value: T, index: number, array: T[]) => T | T[]',
+          ' * 可用入参为 value, number, array 以及 arguments',
+          '*/',
+          'return value.split(/[^a-zA-Z0-9]+/)'
+        ].join('\n')
+      case 'double':
+        return 'return [value, value]'
+      case 'thirdAdd1':
+        return 'return index % 3 === 2 ? value + 1 : value'
+      case 'distinct':
+        return [
+          'const { sets = new Set() } = array',
+          'array.sets = sets',
+          'if (sets.has(value)) {',
+          '    // 返回空数组表示移除当前 value',
+          '    return []',
+          '}',
+          'sets.add(value)',
+          'return value'
+        ].join('\n')
+      case 'useSelf':
+        return ['/**', ' * 当前流程中的函数会被挂载到 window 的 $self 对象上', ' */', 'return this.$self.thirdAdd1(value, index)'].join('\n')
+      case 'useGlobal':
+        return ['/**', ' * 全局函数会被挂载到 window 的 $global 对象上', ' */', "return this.$global.joinBy(arguments, '_')"].join('\n')
+    }
   }
   return ''
 }

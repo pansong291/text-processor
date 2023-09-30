@@ -23,7 +23,7 @@ export type FMCF<T = any> = FlatMapCallbackFunc<T>
 
 export type FuncInstance = FuncConfig & Identifiable
 
-export type StorageKey = `$global-${string}` | `$self-${string}` | 'global-operator-list' | 'procedure-list' | 'output-action'
+export type StorageKey = `$global-${string}` | `$self-${string}-${string}` | 'global-operator-list' | 'procedure-list' | 'output-action'
 
 export type OperatorConfig = FuncDeclaration & Identifiable
 
