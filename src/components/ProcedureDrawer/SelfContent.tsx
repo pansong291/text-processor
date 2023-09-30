@@ -19,7 +19,7 @@ import SortableListItem from '@/components/base/SortableListItem'
 import TextArea from 'antd/es/input/TextArea'
 import ObjectViewer from '@/components/base/ObjectViewer'
 import styled from 'styled-components'
-import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
+import { FuncInstance, OperatorConfig, ProcedureConfig, RegexConfig } from '@/types/base'
 import { useFuncConfig } from '@/components/context/StorageProvider'
 import { useTestString } from '@/components/context/TestStringProvider'
 
@@ -88,16 +88,27 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
     <DrawerContent>
       <div className="left-wrap">
         <Form>
-          <Form.Item label="独立入口">
+          <Form.Item label="独立入口" tooltip={{ title: '通过独立入口触发流程时将会忽略匹配规则与排除规则，直接执行本流程' }}>
             <Switch checked={featureEnabled} onChange={onFeatureEnableChange} />
           </Form.Item>
-          <Form.Item label="正则匹配">
+          <Form.Item
+            label="正则匹配"
+            tooltip={{
+              title: (
+                <RegexTooltipContent
+                  content={'按流程列表顺序进行匹配的正则表达式，当匹配成功时将会触发本流程，后续流程将被忽略。'}
+                  data={procedure.match}
+                />
+              )
+            }}>
             <RegexInput value={procedure.match} onChange={(r) => onChange({ ...procedure, match: r })} />
           </Form.Item>
-          <Form.Item label="正则排除">
+          <Form.Item
+            label="正则排除"
+            tooltip={{ title: <RegexTooltipContent content={'排除的正则表达式，优先级高于匹配规则。'} data={procedure.exclude} /> }}>
             <RegexInput value={procedure.exclude} onChange={(r) => onChange({ ...procedure, exclude: r })} />
           </Form.Item>
-          <Form.Item label="终止游标">
+          <Form.Item label="终止游标" tooltip={{ title: '设置本流程的结束位置' }}>
             <Select
               allowClear
               showSearch
@@ -184,6 +195,26 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
         <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={String(testOutput)} readOnly />
       </div>
     </DrawerContent>
+  )
+}
+
+const RegexTooltipContent: React.FC<{ content: React.ReactNode; data: RegexConfig }> = ({ content, data }) => {
+  const regexStr = useMemo(() => {
+    return `/${data.regex || ''}/${data.flags || ''}`
+  }, [data])
+
+  return (
+    <div>
+      <span>{content}</span>
+      <Button
+        type="primary"
+        size="small"
+        onClick={() => {
+          window.utools?.redirect('正则编辑器', { type: 'text', data: regexStr })
+        }}>
+        去编辑
+      </Button>
+    </div>
   )
 }
 
