@@ -22,6 +22,17 @@
         "Text Processor",
         "String Processor"
       ]
+    },
+    {
+      "code": "@process",
+      "explain": "按列表顺序匹配并处理文本",
+      "icon": "",
+      "cmds": [
+        {
+          "type": "over",
+          "label": "按序处理"
+        }
+      ]
     }
   ]
 }

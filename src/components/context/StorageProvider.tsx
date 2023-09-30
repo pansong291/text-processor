@@ -20,10 +20,10 @@ type ProcedureListContextType<C = Array<ProcedureConfig>> = {
 }
 
 type FuncConfigMapContextType<C = StrMap<FuncConfig>> = {
-  global: C
-  setGlobal: Updater<C>
-  self: C
-  setSelf: Updater<C>
+  globalFuncConfigMap: C
+  setGlobalFuncConfigMap: Updater<C>
+  selfFuncConfigMap: C
+  setSelfFuncConfigMap: Updater<C>
 }
 
 const OutputActionContext = createContext<OutputActionContextType>({
@@ -42,18 +42,20 @@ const ProcedureListContext = createContext<ProcedureListContextType>({
 })
 
 const FuncConfigMapContext = createContext<FuncConfigMapContextType>({
-  global: {},
-  setGlobal() {},
-  self: {},
-  setSelf() {}
+  globalFuncConfigMap: {},
+  setGlobalFuncConfigMap() {},
+  selfFuncConfigMap: {},
+  setSelfFuncConfigMap() {}
 })
 
 const StorageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [outputAction, setOutputAction] = useUpdater<OutputAction>(() => getStorage('output-action'))
+  const [outputAction, setOutputAction] = useUpdater<OutputAction>(() => getStorage('output-action') || 'copy')
   const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
     () => getStorage('global-operator-list')?.map?.(createOperator) || defaultGlobalOperatorList()
   )
-  const [procedureList, setProcedureList] = useUpdater<Array<ProcedureConfig>>(() => getStorage('procedure-list')?.map?.(createProcedure) || [])
+  const [procedureList, setProcedureList] = useUpdater<Array<ProcedureConfig>>(
+    () => getStorage('procedure-list')?.map?.(createProcedure) || defaultProcedureList()
+  )
 
   return (
     <OutputActionContext.Provider value={{ outputAction, setOutputAction }}>
@@ -68,10 +70,14 @@ const StorageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
 
 const FuncConfigMapProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { globalOperatorList } = useGlobalOperatorList()
-  const [global, setGlobal] = useUpdater<StrMap<FuncConfig>>(getConfigMap('global', globalOperatorList))
-  const [self, setSelf] = useUpdater<StrMap<FuncConfig>>({})
+  const [globalFuncConfigMap, setGlobalFuncConfigMap] = useUpdater<StrMap<FuncConfig>>(getConfigMap('global', globalOperatorList))
+  const [selfFuncConfigMap, setSelfFuncConfigMap] = useUpdater<StrMap<FuncConfig>>({})
 
-  return <FuncConfigMapContext.Provider value={{ global, setGlobal, self, setSelf }}>{children}</FuncConfigMapContext.Provider>
+  return (
+    <FuncConfigMapContext.Provider value={{ globalFuncConfigMap, setGlobalFuncConfigMap, selfFuncConfigMap, setSelfFuncConfigMap }}>
+      {children}
+    </FuncConfigMapContext.Provider>
+  )
 }
 
 export const useOutputAction = () => useContext(OutputActionContext)
@@ -100,6 +106,27 @@ function defaultGlobalOperatorList(): Array<OperatorConfig> {
   ]
 }
 
+function defaultProcedureList(): Array<ProcedureConfig> {
+  return [
+    {
+      id: 'example',
+      name: '示例流程',
+      desc: '展示流程和函数的定义与使用',
+      match: {},
+      exclude: {},
+      end: '',
+      operatorList: [
+        { id: 'splitByReg', declaration: 'string', doc: '按正则分割字符串' },
+        { id: 'double', declaration: '', doc: '重复每项元素' },
+        { id: 'thirdAdd1', declaration: '', doc: '将每第三个元素加 1' },
+        { id: 'distinct', declaration: '', doc: '去除相同的值' },
+        { id: 'useSelf', declaration: '', doc: '引用当前流程中的其他函数' },
+        { id: 'useGlobal', declaration: '', doc: '引用全局函数' }
+      ]
+    }
+  ]
+}
+
 function defaultFuncDefinition(type: 'global' | 'self', id: string): string {
   switch (type) {
     case 'global':
@@ -109,6 +136,36 @@ function defaultFuncDefinition(type: 'global' | 'self', id: string): string {
       }
       break
     case 'self':
+      switch (id) {
+        case 'splitByReg':
+          return [
+            '/**',
+            ' * 函数声明为',
+            ' * <T>(value: T, index: number, array: T[]) => T | T[]',
+            ' * 可用入参为 value, number, array 以及 arguments',
+            '*/',
+            'return value.split(/[^a-zA-Z0-9]+/)'
+          ].join('\n')
+        case 'double':
+          return 'return [value, value]'
+        case 'thirdAdd1':
+          return 'return index % 3 === 2 ? value + 1 : value'
+        case 'distinct':
+          return [
+            'const { sets = new Set() } = array',
+            'array.sets = sets',
+            'if (sets.has(value)) {',
+            '    // 返回空数组表示移除当前 value',
+            '    return []',
+            '}',
+            'sets.add(value)',
+            'return value'
+          ].join('\n')
+        case 'useSelf':
+          return ['/**', ' * 当前流程中的函数会被挂载到 window 的 $self 对象上', ' */', 'return this.$self.thirdAdd1(value, index)'].join('\n')
+        case 'useGlobal':
+          return ['/**', ' * 全局函数会被挂载到 window 的 $global 对象上', ' */', "return this.$global.joinBy(arguments, '_')"].join('\n')
+      }
       break
   }
   return ''

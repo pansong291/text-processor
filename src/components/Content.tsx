@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { createProcedure, deleteStorage, useUpdater } from '@/utils'
+import { createProcedure, deleteStorage, execute, use$self, useUpdater } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
 import { DeleteOutlined, FormOutlined, FunctionOutlined, PlusOutlined } from '@ant-design/icons'
@@ -10,7 +10,8 @@ import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
 import { OutputAction, ProcedureConfig, StorageKey } from '@/types/base'
-import { useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
+import { getConfigMap, useFuncConfig, useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
+import { useTestString } from '@/components/context/TestStringProvider'
 
 const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', desc: '', match: {}, exclude: {}, end: '', operatorList: [] }
 
@@ -25,12 +26,65 @@ const Content: React.FC = () => {
   const { dark, setDark } = useTheme()
   const { outputAction, setOutputAction } = useOutputAction()
   const { procedureList, setProcedureList } = useProcedureList()
+  const { globalFuncConfigMap, setSelfFuncConfigMap } = useFuncConfig()
+  const { setTestStr } = useTestString()
+
   const [isGlobal, setIsGlobal] = useUpdater(false)
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
 
   const onEditClick = (item: ProcedureConfig) => {
+    setSelfFuncConfigMap(getConfigMap('self', item.operatorList))
     setProcedure(item)
   }
+
+  useEffect(() => {
+    window.utools?.onPluginEnter(({ code, type, payload }) => {
+      if (type !== 'over') return
+      let procedure
+      if (code === '@process') {
+        procedure = procedureList.find((p) => {
+          try {
+            const match = !p.match.regex || new RegExp(p.match.regex, p.match.flags).test(payload)
+            if (!match || !p.exclude.regex) return match
+            const exclude = new RegExp(p.exclude.regex, p.exclude.flags).test(payload)
+            return !exclude
+          } catch (e) {
+            return false
+          }
+        })
+      } else {
+        procedure = procedureList.find((p) => p.id === code)
+      }
+      if (!procedure) return
+
+      use$self(getConfigMap('self', procedure.operatorList))
+      try {
+        const result = String(
+          execute(
+            payload,
+            procedure.operatorList.map((o) => o.id),
+            procedure.end
+          )
+        )
+        switch (outputAction) {
+          case 'copy':
+            window.utools?.copyText(result)
+            window.utools?.hideMainWindow()
+            break
+          case 'copy-paste':
+            window.utools?.hideMainWindowPasteText(result)
+            break
+          case 'type-input':
+            window.utools?.hideMainWindowTypeString(result)
+            break
+        }
+      } catch (e) {
+        console.error(e)
+        setTestStr(payload)
+        setProcedure(payload)
+      }
+    })
+  }, [globalFuncConfigMap, outputAction, procedureList])
 
   return (
     <ContentStyle>

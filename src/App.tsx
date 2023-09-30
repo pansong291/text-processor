@@ -9,11 +9,9 @@ import { use$global } from '@/utils'
 
 const App: React.FC = () => {
   const { dark } = useTheme()
-  const { global } = useFuncConfig()
+  const { globalFuncConfigMap } = useFuncConfig()
 
-  useEffect(() => {
-    use$global(global)
-  }, [global])
+  useEffect(() => use$global(globalFuncConfigMap), [globalFuncConfigMap])
 
   return (
     <ConfigProvider locale={zhCN} theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>

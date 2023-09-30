@@ -20,17 +20,15 @@ type ProcedureDrawerProps = {
 
 /*
 TODO 待实现功能：
- 1 正则匹配
- 2 结束游标
- 3 对象预览 已引入相关组件
- 4 全局类型定义
+ - 全局类型定义
+ - 导入导出
  */
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, onChange, onFullyClose }) => {
   const [push, setPush] = useUpdater(0)
   const { setGlobalOperatorList } = useGlobalOperatorList()
   const funcConfigContext = useFuncConfig()
-  const setFuncConfig = isGlobal ? funcConfigContext.setGlobal : funcConfigContext.setSelf
+  const setFuncConfigMap = isGlobal ? funcConfigContext.setGlobalFuncConfigMap : funcConfigContext.setSelfFuncConfigMap
   const [funcInst, setFuncInst] = useUpdater<FuncInstance>(BLANK_FUNC_INST)
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
@@ -82,7 +80,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
         isGlobal={isGlobal}
         funcInstance={funcInst}
         onChange={(f) => {
-          setFuncConfig((p) => {
+          setFuncConfigMap((p) => {
             delete p[funcInst.id]
             p[f.id] = { definition: f.definition, declaration: f.declaration, doc: f.doc }
           })

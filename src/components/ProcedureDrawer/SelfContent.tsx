@@ -11,6 +11,7 @@ import ObjectViewer from '@/components/base/ObjectViewer'
 import styled from 'styled-components'
 import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
 import { useFuncConfig } from '@/components/context/StorageProvider'
+import { useTestString } from '@/components/context/TestStringProvider'
 
 type SelfContentProps = {
   procedure: ProcedureConfig
@@ -20,9 +21,9 @@ type SelfContentProps = {
 
 const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEditor }) => {
   const { modal } = AntdApp.useApp()
-  const { self: selfFuncConfigMap, setSelf: setSelfFuncConfigMap } = useFuncConfig()
+  const { selfFuncConfigMap, setSelfFuncConfigMap } = useFuncConfig()
   const [featureEnabled, setFeatureEnabled] = useUpdater(false)
-  const [testStr, setTestStr] = useUpdater('')
+  const { testStr, setTestStr } = useTestString()
 
   const updateOperatorList = createUpdater<Array<OperatorConfig>>((value) => {
     procedure.operatorList = value instanceof Function ? value(procedure.operatorList) : value
@@ -67,7 +68,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
   }, [updateFeatureState])
 
   useEffect(() => {
-    if (featureEnabled) {
+    if (procedure.id && featureEnabled) {
       window.utools?.removeFeature(procedure.id)
       window.utools?.setFeature(createUtoolsFeature(procedure))
     }
@@ -88,7 +89,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
           </Form.Item>
           <Form.Item label="终止游标">
             <Select
-              allowClear={true}
+              allowClear
               showSearch
               value={procedure.end}
               options={createSimpleOptions(procedure.operatorList.map((o) => o.id))}
@@ -157,7 +158,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                   }}
                 />
               ]}>
-              <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
+              <Button className="border-less" size="small" onClick={() => onEditClick(item)}>
                 {item.id}
               </Button>
             </SortableListItem>
@@ -169,7 +170,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
         <div className="obj-view-wrap">
           <ObjectViewer className="obj-viewer" data={testOutput} />
         </div>
-        <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={String(testOutput)} readOnly={true} />
+        <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={String(testOutput)} readOnly />
       </div>
     </DrawerContent>
   )

@@ -25,13 +25,12 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance:
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
 
   useEffect(() => {
-    console.log('editor.current?.setValue', editor)
     editor?.setValue(funcInst.definition || '')
   }, [editor, funcInst.definition])
 
   useEffect(
-    () => updateLibs(funcConfigContext.global, funcConfigContext.self, isGlobal ? null : funcInst.declaration),
-    [funcConfigContext.global, funcConfigContext.self, isGlobal, funcInst.declaration]
+    () => updateLibs(funcConfigContext.globalFuncConfigMap, funcConfigContext.selfFuncConfigMap, isGlobal ? null : funcInst.declaration),
+    [funcConfigContext.globalFuncConfigMap, funcConfigContext.selfFuncConfigMap, isGlobal, funcInst.declaration]
   )
 
   return (

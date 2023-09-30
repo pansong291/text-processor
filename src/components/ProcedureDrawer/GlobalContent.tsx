@@ -2,7 +2,7 @@ import React from 'react'
 import { FuncInstance, OperatorConfig } from '@/types/base'
 import { useFuncConfig, useGlobalOperatorList } from '@/components/context/StorageProvider'
 import styled from 'styled-components'
-import { App as AntdApp, Button, Form, Modal } from 'antd'
+import { App as AntdApp, Button, Form, Modal, Typography } from 'antd'
 import { createOperator, deleteStorage } from '@/utils'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import SortableList from '@/components/base/SortableList'
@@ -16,7 +16,7 @@ type GlobalContentProps = {
 const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
   const { modal } = AntdApp.useApp()
   const { globalOperatorList, setGlobalOperatorList } = useGlobalOperatorList()
-  const { global: globalFuncConfigMap, setGlobal: setGlobalFuncConfigMap } = useFuncConfig()
+  const { globalFuncConfigMap, setGlobalFuncConfigMap } = useFuncConfig()
 
   const onEditClick = (item: OperatorConfig) => {
     onOpenEditor(Object.assign({ id: item.id }, globalFuncConfigMap[item.id]))
@@ -75,7 +75,7 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
                     maskClosable: true,
                     afterClose: Modal.destroyAll,
                     onOk() {
-                      deleteStorage(`$self-${item.id}`)
+                      deleteStorage(`$global-${item.id}`)
                       setGlobalFuncConfigMap((p) => {
                         delete p[item.id]
                       })
@@ -90,6 +90,9 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
             <Button className="border-less flex-grow" size="small" onClick={() => onEditClick(item)}>
               {item.id}
             </Button>
+            <Typography.Text className="flex-shrink" type="secondary" ellipsis={{ tooltip: true }}>
+              {item.doc}
+            </Typography.Text>
           </SortableListItem>
         )}
       />
@@ -102,7 +105,7 @@ const DrawerContent = styled.div`
   height: max-content;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 
   .ant-form-item {
     margin-bottom: 16px;
