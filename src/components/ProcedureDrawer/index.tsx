@@ -80,8 +80,8 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
         isGlobal={isGlobal}
         funcInstance={funcInst}
         onChange={(f) => {
-          if (funcInst.id !== f.id) deleteStorage(`$${isGlobal ? 'global' : 'self'}-${funcInst.id}`)
-          setStorage(`$${isGlobal ? 'global' : 'self'}-${f.id}`, f.definition)
+          if (funcInst.id !== f.id) deleteStorage(isGlobal ? `$global-${funcInst.id}` : `$self-${procedure.id}-${funcInst.id}`)
+          setStorage(isGlobal ? `$global-${f.id}` : `$self-${procedure.id}-${f.id}`, f.definition)
           setFuncConfigMap((p) => {
             delete p[funcInst.id]
             p[f.id] = { definition: f.definition, declaration: f.declaration, doc: f.doc }
