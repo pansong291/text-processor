@@ -30,7 +30,8 @@
       "cmds": [
         {
           "type": "over",
-          "label": "按序处理"
+          "label": "按序处理",
+          "maxLength": 999999999
         }
       ]
     }
