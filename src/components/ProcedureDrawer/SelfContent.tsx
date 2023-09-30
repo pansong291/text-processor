@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { App as AntdApp, Button, Form, Modal, Select, Switch } from 'antd'
 import RegexInput from '@/components/base/RegexInput'
-import { createOperator, createSimpleOptions, createUpdater, createUtoolsFeature, deleteStorage, execute, use$self, useUpdater } from '@/utils'
+import {
+  createOperator,
+  createSimpleOptions,
+  createUpdater,
+  createUtoolsFeature,
+  deleteStorage,
+  execute,
+  setStorage,
+  use$self,
+  useUpdater
+} from '@/utils'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -103,6 +113,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                 title="添加函数"
                 onClick={() => {
                   const operator = createOperator()
+                  setStorage(`$self-${operator.id}`, '')
                   setSelfFuncConfigMap((p) => {
                     p[operator.id] = { definition: '' }
                   })

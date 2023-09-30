@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react'
 import { FuncConfig, OperatorConfig, OutputAction, ProcedureConfig, Processor, StrMap } from '@/types/base'
-import { createOperator, createProcedure, getStorage, useUpdater } from '@/utils'
+import { createOperator, createProcedure, getStorage, useStorage, useUpdater } from '@/utils'
 
 type Updater<T> = React.Dispatch<Processor<T>>
 
@@ -49,12 +49,14 @@ const FuncConfigMapContext = createContext<FuncConfigMapContextType>({
 })
 
 const StorageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [outputAction, setOutputAction] = useUpdater<OutputAction>(() => getStorage('output-action') || 'copy')
-  const [globalOperatorList, setGlobalOperatorList] = useUpdater<Array<OperatorConfig>>(
-    () => getStorage('global-operator-list')?.map?.(createOperator) || defaultGlobalOperatorList()
+  const [outputAction, setOutputAction] = useStorage<OutputAction>('output-action', (o) => o || 'copy')
+  const [globalOperatorList, setGlobalOperatorList] = useStorage<Array<OperatorConfig>>(
+    'global-operator-list',
+    (o) => o?.map?.(createOperator) || defaultGlobalOperatorList()
   )
-  const [procedureList, setProcedureList] = useUpdater<Array<ProcedureConfig>>(
-    () => getStorage('procedure-list')?.map?.(createProcedure) || defaultProcedureList()
+  const [procedureList, setProcedureList] = useStorage<Array<ProcedureConfig>>(
+    'procedure-list',
+    (o) => o?.map?.(createProcedure) || defaultProcedureList()
   )
 
   return (

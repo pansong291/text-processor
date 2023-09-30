@@ -22,7 +22,7 @@ const outputActionOptions: SegmentedProps['options'] = [
 ]
 
 const Content: React.FC = () => {
-  const { modal } = AntdApp.useApp()
+  const { modal, message } = AntdApp.useApp()
   const { dark, setDark } = useTheme()
   const { outputAction, setOutputAction } = useOutputAction()
   const { procedureList, setProcedureList } = useProcedureList()
@@ -55,7 +55,10 @@ const Content: React.FC = () => {
       } else {
         procedure = procedureList.find((p) => p.id === code)
       }
-      if (!procedure) return
+      if (!procedure) {
+        message.warning('未匹配到可执行的流程')
+        return
+      }
 
       use$self(getConfigMap('self', procedure.operatorList))
       try {
@@ -140,6 +143,7 @@ const Content: React.FC = () => {
                     afterClose: Modal.destroyAll,
                     onOk() {
                       deleteStorage(...item.operatorList.map<StorageKey>((o) => `$self-${o.id}`))
+                      window.utools?.removeFeature(item.id)
                       setProcedureList((p) => {
                         if (p[i] === item) p.splice(i, 1)
                       })

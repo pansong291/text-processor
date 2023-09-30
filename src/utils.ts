@@ -911,6 +911,18 @@ export function useUpdater<S>(initialState?: S | (() => S)): [S | undefined, Rea
   return [state, createUpdater(setState)]
 }
 
+export function useStorage<S>(key: StorageKey, initialState: (o: any) => S): [S, React.Dispatch<Processor<S>>] {
+  const [state, setState] = useState(() => initialState(getStorage(key)))
+  const withStorage = (p: React.SetStateAction<S>) => {
+    setState((s) => {
+      const n = p instanceof Function ? p(s) : p
+      setStorage(key, n)
+      return n
+    })
+  }
+  return [state, createUpdater(withStorage)]
+}
+
 export function validateJavaScriptIdentifier(ident: string): string | void {
   if (!ident) return '函数名称不能为空'
   if (/^\d.*$/.test(ident)) return '函数名称不允许数字字符开头'

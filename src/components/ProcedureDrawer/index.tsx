@@ -3,7 +3,7 @@ import { Button, Typography } from 'antd'
 import FunctionDrawer from '@/components/FunctionDrawer'
 import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
 import InputModal from '@/components/base/InputModal'
-import { createUpdater, useUpdater } from '@/utils'
+import { createUpdater, deleteStorage, setStorage, useUpdater } from '@/utils'
 import { useFuncConfig, useGlobalOperatorList } from '@/components/context/StorageProvider'
 import Drawer from '@/components/base/Drawer'
 import SelfContent from '@/components/ProcedureDrawer/SelfContent'
@@ -80,6 +80,8 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
         isGlobal={isGlobal}
         funcInstance={funcInst}
         onChange={(f) => {
+          if (funcInst.id !== f.id) deleteStorage(`$${isGlobal ? 'global' : 'self'}-${funcInst.id}`)
+          setStorage(`$${isGlobal ? 'global' : 'self'}-${f.id}`, f.definition)
           setFuncConfigMap((p) => {
             delete p[funcInst.id]
             p[f.id] = { definition: f.definition, declaration: f.declaration, doc: f.doc }

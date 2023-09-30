@@ -3,7 +3,7 @@ import { FuncInstance, OperatorConfig } from '@/types/base'
 import { useFuncConfig, useGlobalOperatorList } from '@/components/context/StorageProvider'
 import styled from 'styled-components'
 import { App as AntdApp, Button, Form, Modal, Typography } from 'antd'
-import { createOperator, deleteStorage } from '@/utils'
+import { createOperator, deleteStorage, setStorage } from '@/utils'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -32,6 +32,7 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
               title="添加函数"
               onClick={() => {
                 const operator = createOperator()
+                setStorage(`$global-${operator.id}`, '')
                 setGlobalFuncConfigMap((p) => {
                   p[operator.id] = { definition: '' }
                 })
