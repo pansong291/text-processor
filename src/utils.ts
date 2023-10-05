@@ -800,7 +800,15 @@ function limitDeep<F extends Function>(name: string, limit: number, fn: F, calle
 }
 
 function putMethod<T extends object>(obj: T, name: string & keyof T, definition: string) {
-  obj[name] = limitDeep(name, 256, new Function(definition).call(window), window)
+  let fn
+  try {
+    fn = new Function(definition).call(window)
+  } catch (e) {
+    fn = () => {
+      throw e
+    }
+  }
+  obj[name] = limitDeep(name, 256, fn, window)
 }
 
 /**
