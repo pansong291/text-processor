@@ -14,7 +14,9 @@ const App: React.FC = () => {
   useEffect(() => use$global(globalFuncConfigMap), [globalFuncConfigMap])
 
   return (
-    <ConfigProvider locale={zhCN} theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{ algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm, token: { fontFamily: 'var(--font-family-mono)' } }}>
       <AntdApp>
         <GlobalStyle mode={dark ? 'dark' : 'light'} />
         <Content />

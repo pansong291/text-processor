@@ -16,10 +16,6 @@ body {
   background-color: var(--bg-color);
   transition: background-color, .3s;
 
-  button.ant-btn, input.ant-input, textarea.ant-input, .ant-select .ant-select-selector, .ant-select-dropdown, .ant-typography, .ant-modal, .ant-notification * {
-    font-family: var(--font-family-mono);
-  }
-
   .fw-normal {
     font-weight: normal;
   }
