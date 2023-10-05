@@ -22,7 +22,7 @@ const outputActionOptions: SegmentedProps['options'] = [
 ]
 
 const Content: React.FC = () => {
-  const { modal, message } = AntdApp.useApp()
+  const { modal, message, notification } = AntdApp.useApp()
   const { dark, setDark } = useTheme()
   const { outputAction, setOutputAction } = useOutputAction()
   const { procedureList, setProcedureList } = useProcedureList()
@@ -82,9 +82,13 @@ const Content: React.FC = () => {
             break
         }
       } catch (e) {
-        console.error(e)
         setTestStr(payload)
-        setProcedure(payload)
+        notification.error({
+          placement: 'bottomRight',
+          message: `${procedure.name} 流程执行异常`,
+          description: String(e),
+          duration: 0
+        })
       }
     })
   }, [globalFuncConfigMap, outputAction, procedureList])
