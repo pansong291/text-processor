@@ -4,6 +4,7 @@
   "version": "1.0.1",
   "author": "paso",
   "main": "web/index.html",
+  "preload": "index.js",
   "logo": "logo.png",
   "development": {
     "main": "http://localhost:10987"

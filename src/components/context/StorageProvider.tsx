@@ -143,7 +143,7 @@ function defaultFuncDefinition(isGlobal: boolean, id: string): string {
           ' * 函数声明为',
           ' * <T>(value: T, index: number, array: T[]) => T | T[]',
           ' * 可用入参为 value, number, array 以及 arguments',
-          '*/',
+          ' */',
           'return value.split(/[^a-zA-Z0-9]+/)'
         ].join('\n')
       case 'double':

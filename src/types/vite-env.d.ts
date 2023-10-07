@@ -8,5 +8,9 @@ declare global {
     utools?: UToolsApi
     $global: Record<string, Function>
     $self: Record<string, FMCF>
+    _preload: {
+      writeTo: (str: string, path: string) => void
+      readFrom: (path: string) => string
+    }
   }
 }
