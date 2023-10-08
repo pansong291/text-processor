@@ -1,6 +1,6 @@
 {
   "pluginName": "Text Processor",
-  "description": "使用 flatMap 处理文本内容",
+  "description": "使用 flatMap 处理文本内容. 文本处理 字符串处理 文字处理 string映射",
   "version": "1.0.1",
   "author": "paso",
   "main": "web/index.html",
