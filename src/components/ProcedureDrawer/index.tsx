@@ -21,7 +21,6 @@ type ProcedureDrawerProps = {
 /*
 TODO 待实现功能：
  - 全局类型定义
- - 导入导出
  */
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, onChange, onFullyClose }) => {

@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react'
-import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Typography } from 'antd'
+import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { createProcedure, deleteStorage, execute, use$self, useUpdater } from '@/utils'
+import { createOperator, createProcedure, deleteStorage, execute, getStorage, randomIdentifier, setStorage, use$self, useUpdater } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
-import { DeleteOutlined, FormOutlined, FunctionOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import ProcedureDrawer from '@/components/ProcedureDrawer'
 import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
-import { OutputAction, ProcedureConfig, StorageKey } from '@/types/base'
-import { getConfigMap, useFuncConfig, useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
+import { FuncInstance, OutputAction, ProcedureConfig, ProcedureJSON, StorageKey } from '@/types/base'
+import { getConfigMap, useFuncConfig, useGlobalOperatorList, useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
 import { useTestString } from '@/components/context/TestStringProvider'
 
 const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', desc: '', match: {}, exclude: {}, end: '', operatorList: [] }
@@ -25,12 +25,120 @@ const Content: React.FC = () => {
   const { modal, message, notification } = AntdApp.useApp()
   const { dark, setDark } = useTheme()
   const { outputAction, setOutputAction } = useOutputAction()
+  const { globalOperatorList, setGlobalOperatorList } = useGlobalOperatorList()
   const { procedureList, setProcedureList } = useProcedureList()
-  const { globalFuncConfigMap, setSelfFuncConfigMap } = useFuncConfig()
+  const { globalFuncConfigMap, setGlobalFuncConfigMap, setSelfFuncConfigMap } = useFuncConfig()
   const { setTestStr } = useTestString()
 
   const [isGlobal, setIsGlobal] = useUpdater(false)
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
+
+  const onImportClick = () => {
+    const path = window.utools?.showOpenDialog({
+      properties: ['openFile', 'treatPackageAsDirectory', 'dontAddToRecent'],
+      filters: [
+        { name: 'JSON 文本文件', extensions: ['json', 'txt'] },
+        { name: '全部文件', extensions: ['*'] }
+      ]
+    })?.[0]
+    if (!path) return
+    try {
+      const data = JSON.parse(window._preload.readFrom(path))
+      const globalFunctionList: Array<FuncInstance> = data.globalFunctionList
+
+      const overrideImport = () => {
+        for (const f of globalFunctionList) {
+          setGlobalOperatorList((p) => {
+            const op = p.find((o) => o.id === f.id)
+            if (op) {
+              op.declaration = f.declaration
+              op.doc = f.doc
+            } else {
+              p.push(createOperator(f))
+            }
+          })
+          setGlobalFuncConfigMap((p) => {
+            p[f.id] = { declaration: f.declaration, definition: f.definition, doc: f.doc }
+          })
+          setStorage(`$global-${f.id}`, f.definition)
+        }
+        const procList: Array<ProcedureJSON> = data.procedureList
+        setProcedureList((p) => {
+          for (const pr of procList) {
+            const pid = randomIdentifier()
+            p.push(
+              createProcedure({
+                ...pr,
+                id: pid,
+                operatorList: pr.functionList.map((f) => {
+                  setStorage(`$self-${pid}-${f.id}`, f.definition)
+                  return {
+                    id: f.id,
+                    declaration: f.declaration,
+                    doc: f.doc
+                  }
+                })
+              })
+            )
+          }
+        })
+        message.success('导入成功')
+      }
+
+      const globalDistinct = new Set(globalOperatorList.map((o) => o.id))
+      if (globalFunctionList.find((f) => globalDistinct.has(f.id))) {
+        modal.confirm({
+          title: '全局函数命名冲突',
+          content: '是否覆盖相同名称的全局函数以继续导入？',
+          okType: 'danger',
+          centered: true,
+          maskClosable: false,
+          afterClose: Modal.destroyAll,
+          onOk: overrideImport
+        })
+      } else {
+        overrideImport()
+      }
+    } catch (e) {
+      message.error(String(e))
+    }
+  }
+
+  const onExportClick = () => {
+    let path = window.utools?.showSaveDialog({
+      properties: ['treatPackageAsDirectory', 'showOverwriteConfirmation', 'dontAddToRecent'],
+      filters: [
+        { name: 'JSON 文本文件', extensions: ['json', 'txt'] },
+        { name: '全部文件', extensions: ['*'] }
+      ]
+    })
+    if (!path) return
+    try {
+      const procList: Array<ProcedureJSON> = []
+      for (const p of procedureList) {
+        procList.push({
+          id: p.id,
+          name: p.name,
+          desc: p.desc,
+          match: p.match,
+          exclude: p.exclude,
+          end: p.end,
+          functionList: p.operatorList.map((o) => ({
+            ...o,
+            definition: getStorage(`$self-${p.id}-${o.id}`) || ''
+          }))
+        })
+      }
+      const globalFunctionList: Array<FuncInstance> = globalOperatorList.map((o) => ({
+        ...o,
+        definition: getStorage(`$global-${o.id}`) || ''
+      }))
+      window._preload.writeTo(JSON.stringify({ procedureList: procList, globalFunctionList }), path)
+      message.success('导出成功')
+    } catch (e) {
+      message.error(String(e))
+    }
+  }
 
   const onEditClick = (item: ProcedureConfig) => {
     setSelfFuncConfigMap(getConfigMap(`self-${item.id}`, item.operatorList))
@@ -111,8 +219,12 @@ const Content: React.FC = () => {
               })
             }
           />
-          <Button type="default" shape="circle" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
-          <Button type={dark ? 'primary' : 'default'} shape="circle" title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
+          <Space.Compact>
+            <Button type="default" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
+            <Button title="导入" icon={<ImportOutlined />} onClick={onImportClick} />
+            <Button title="导出" icon={<ExportOutlined />} onClick={onExportClick} />
+            <Button type={dark ? 'primary' : 'default'} title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
+          </Space.Compact>
         </div>
       </div>
       <SortableList

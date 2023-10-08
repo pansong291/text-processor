@@ -42,3 +42,7 @@ export type ProcedureConfig = {
 export type OutputAction = 'copy' | 'copy-paste' | 'type-input'
 
 export type Processor<T> = ((state: T) => T | void) | T
+
+export type ProcedureJSON = Omit<ProcedureConfig, 'operatorList'> & {
+  functionList: Array<FuncInstance>
+}
