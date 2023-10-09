@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Button, Typography } from 'antd'
 import FunctionDrawer from '@/components/FunctionDrawer'
 import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
@@ -25,11 +25,16 @@ TODO 待实现功能：
 
 const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, onChange, onFullyClose }) => {
   const [push, setPush] = useUpdater(0)
-  const { setGlobalOperatorList } = useGlobalOperatorList()
+  const { globalOperatorList, setGlobalOperatorList } = useGlobalOperatorList()
   const funcConfigContext = useFuncConfig()
   const setFuncConfigMap = isGlobal ? funcConfigContext.setGlobalFuncConfigMap : funcConfigContext.setSelfFuncConfigMap
   const [funcInst, setFuncInst] = useUpdater<FuncInstance>(BLANK_FUNC_INST)
   const [modalValues, setModalValues] = useUpdater<Array<string>>([])
+
+  const funcIdSet = useMemo(() => {
+    const operatorList = isGlobal ? globalOperatorList : procedure.operatorList
+    return new Set(operatorList.map((o) => o.id))
+  }, [isGlobal, globalOperatorList, procedure.operatorList])
 
   const updateOperatorList = isGlobal
     ? setGlobalOperatorList
@@ -78,6 +83,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
       <FunctionDrawer
         isGlobal={isGlobal}
         funcInstance={funcInst}
+        funcIdSet={funcIdSet}
         onChange={(f) => {
           if (funcInst.id !== f.id) deleteStorage(isGlobal ? `$global-${funcInst.id}` : `$self-${procedure.id}-${funcInst.id}`)
           setStorage(isGlobal ? `$global-${f.id}` : `$self-${procedure.id}-${f.id}`, f.definition)

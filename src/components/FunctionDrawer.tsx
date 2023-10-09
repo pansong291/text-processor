@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { App as AntdApp, Button, Typography } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { updateLibs, useUpdater, validateJavaScriptIdentifier } from '@/utils'
+import { updateLibs, useUpdater, validateJavaScriptIdentifier, validateNotContain } from '@/utils'
 import { FuncInstance } from '@/types/base'
 import InputModal from '@/components/base/InputModal'
 import { useFuncConfig } from '@/components/context/StorageProvider'
@@ -12,12 +12,20 @@ import { monaco } from '@/lib/monaco'
 type FunctionDrawerProps = {
   isGlobal?: boolean
   funcInstance: FuncInstance
+  funcIdSet: Set<string>
   onChange: React.Dispatch<FuncInstance>
   onStartClose?: () => void
   onFullyClose: () => void
 }
 
-const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance: funcInst, onChange, onStartClose, onFullyClose }) => {
+const FunctionDrawer: React.FC<FunctionDrawerProps> = ({
+  isGlobal,
+  funcInstance: funcInst,
+  funcIdSet,
+  onChange,
+  onStartClose,
+  onFullyClose
+}) => {
   const { message } = AntdApp.useApp()
   const { dark } = useTheme()
   const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor>()
@@ -72,7 +80,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({ isGlobal, funcInstance:
         ]}
         onClose={(v) => {
           if (v) {
-            const msg = validateJavaScriptIdentifier(v[0])
+            const msg = validateJavaScriptIdentifier(v[0]) || validateNotContain(funcInst.id, v[0], funcIdSet)
             if (msg) {
               message.error(msg)
               return
