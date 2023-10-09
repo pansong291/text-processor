@@ -851,6 +851,10 @@ export function deleteStorage(...keys: Array<StorageKey>) {
   keys?.forEach((key) => window.utools?.dbStorage.removeItem(key))
 }
 
+export function isPrimitive(value: any) {
+  return value === null || ['undefined', 'string', 'number', 'bigint', 'boolean', 'symbol'].includes(typeof value)
+}
+
 /**
  * 获取随机标识符
  * @param len 长度
@@ -900,10 +904,10 @@ export function createUpdater<S>(set: React.Dispatch<React.SetStateAction<S>>) {
   return (p: Processor<S>) =>
     set((s) => {
       if (!(p instanceof Function)) return p
-      const r = p(s)
+      const c = Array.isArray(s) ? (s.slice() as S) : isPrimitive(s) ? s : { ...s }
+      const r = p(c)
       if (r !== void 0) return r
-      if (Array.isArray(s)) return s.slice() as S
-      return { ...s }
+      return c
     })
 }
 
@@ -935,6 +939,12 @@ export function validateJavaScriptIdentifier(ident: string): string | void {
   if (!ident) return '函数名称不能为空'
   if (/^\d.*$/.test(ident)) return '函数名称不允许数字字符开头'
   if (/[^$\d\w]/.test(ident)) return '函数名称只允许英文字母、数字、下划线和 $ 符号'
+}
+
+export function validateNotContain(origin: string, now: string, all: Set<string>) {
+  if (now !== origin && all.has(now)) {
+    return '该名称已存在'
+  }
 }
 
 export function execute(input: any, funcList: Array<string>, stop?: string) {

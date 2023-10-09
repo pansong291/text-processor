@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { monaco } from '@/lib/monaco'
-import { useUpdater } from '@/utils'
 
 type MonacoEditorProps = {
   className?: string
@@ -10,7 +9,7 @@ type MonacoEditorProps = {
 }
 
 const MonacoEditor: React.FC<MonacoEditorProps> = (props) => {
-  const [editor, setEditor] = useUpdater<monaco.editor.IStandaloneCodeEditor>()
+  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>()
   const monacoEl = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => props.onLoaded(editor), [editor, props.onLoaded])

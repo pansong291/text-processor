@@ -2,6 +2,7 @@ import { customValue, ObjectView, ObjectViewProps } from 'react-object-view'
 import React from 'react'
 import styled from 'styled-components'
 import { useTheme } from '@/components/context/ThemeProvider'
+import { isPrimitive } from '@/utils'
 
 type ObjectViewerProps = {
   className?: string
@@ -43,8 +44,6 @@ const errorRender =
   <E extends Error>(e: E) =>
   () =>
     <span style={{ color: 'red' }}>{String(e)}</span>
-
-const isPrimitive = (value: any) => value === null || ['undefined', 'string', 'number', 'bigint', 'boolean', 'symbol'].includes(typeof value)
 
 const customRenderError = (data: any) => {
   if (!isPrimitive(data)) {
