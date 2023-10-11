@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { App as AntdApp, Button, Typography } from 'antd'
 import MonacoEditor from '@/components/base/MonacoEditor'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { updateLibs, useUpdater, validateJavaScriptIdentifier, validateNotContain } from '@/utils'
+import { defaultElementType, defaultFunctionType, updateLibs, useUpdater, validateJavaScriptIdentifier, validateNotContain } from '@/utils'
 import { FuncInstance } from '@/types/base'
 import InputModal from '@/components/base/InputModal'
 import { useFuncConfig } from '@/components/context/StorageProvider'
@@ -73,7 +73,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({
           {
             label: isGlobal ? '函数声明' : '元素类型',
             maxLength: 200,
-            placeholder: isGlobal ? 'Function' : 'any',
+            placeholder: isGlobal ? defaultFunctionType : defaultElementType,
             value: modalValues[1]
           },
           { textarea: true, label: '函数描述', maxLength: 200, autoSize: true, value: modalValues[2] }

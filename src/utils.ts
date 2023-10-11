@@ -2,6 +2,10 @@ import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, Procedu
 import { monaco } from '@/lib/monaco'
 import React, { useState } from 'react'
 
+export const defaultElementType = 'string'
+
+export const defaultFunctionType = 'Function'
+
 export const utoolsLib = {
   filePath: 'ts:utools-api-types/utools.api.d.ts',
   content: `interface UBrowser {
@@ -727,7 +731,7 @@ export {}`
  * 更新编辑器的支持库
  */
 export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: StrMap<FuncDeclaration>, elemType?: string | null) {
-  if (elemType !== null && !elemType) elemType = 'any'
+  if (elemType !== null && !elemType) elemType = defaultElementType
   monaco.languages.typescript.javascriptDefaults.setExtraLibs([
     {
       content: [
@@ -736,12 +740,12 @@ export function updateLibs(globalFuncMap: StrMap<FuncDeclaration>, selfFuncMap: 
         '  namespace globalThis {',
         '    var $global: {',
         Object.entries(globalFuncMap)
-          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:${f.declaration || 'Function'};`)
+          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:${f.declaration || defaultFunctionType};`)
           .join('\n'),
         '    }',
         '    var $self: {',
         Object.entries(selfFuncMap)
-          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:FlatMapCallbackFunc<${f.declaration || 'any'}>;`)
+          .map(([n, f]) => `/** ${f.doc || ''} */ ${n}:FlatMapCallbackFunc<${f.declaration || defaultElementType}>;`)
           .join('\n'),
         '    }',
         '  }',

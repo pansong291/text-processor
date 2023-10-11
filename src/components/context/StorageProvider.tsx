@@ -118,7 +118,7 @@ function defaultProcedureList(): Array<ProcedureConfig> {
       exclude: {},
       end: '',
       operatorList: [
-        { id: 'splitByReg', declaration: 'string', doc: '按正则分割字符串' },
+        { id: 'splitByReg', declaration: '', doc: '按正则分割字符串' },
         { id: 'double', declaration: '', doc: '重复每项元素' },
         { id: 'thirdAdd1', declaration: '', doc: '将每第三个元素加 1' },
         { id: 'distinct', declaration: '', doc: '去除相同的值' },
