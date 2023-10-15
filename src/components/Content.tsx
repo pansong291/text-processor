@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
+import { App as AntdApp, Button, Flex, Form, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
 import { createOperator, createProcedure, deleteStorage, execute, getStorage, randomIdentifier, setStorage, use$self, useUpdater } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
@@ -202,12 +202,12 @@ const Content: React.FC = () => {
   }, [globalFuncConfigMap, outputAction, procedureList])
 
   return (
-    <ContentStyle>
-      <div className="title-line">
+    <ContentStyle vertical gap={16}>
+      <Flex justify="space-between">
         <Form.Item label="输出模式">
           <Segmented options={outputActionOptions} value={outputAction} onChange={(v) => setOutputAction(v as OutputAction)} />
         </Form.Item>
-        <div className="action-btn-wrap">
+        <Flex gap={8}>
           <Button
             type="primary"
             shape="circle"
@@ -225,8 +225,8 @@ const Content: React.FC = () => {
             <Button title="导出" icon={<ExportOutlined />} onClick={onExportClick} />
             <Button type={dark ? 'primary' : 'default'} title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
           </Space.Compact>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
       <SortableList
         bordered
         rowKey="id"
@@ -296,24 +296,11 @@ const Content: React.FC = () => {
   )
 }
 
-const ContentStyle = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+const ContentStyle = styled(Flex)`
   padding: 16px 24px;
 
-  .title-line {
-    display: flex;
-    justify-content: space-between;
-
-    .ant-form-item {
-      margin-bottom: 0;
-    }
-
-    .action-btn-wrap {
-      display: flex;
-      gap: 8px;
-    }
+  .ant-form-item {
+    margin-bottom: 0;
   }
 `
 

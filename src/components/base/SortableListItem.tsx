@@ -1,5 +1,5 @@
 import React from 'react'
-import { List } from 'antd'
+import { Flex, List } from 'antd'
 import { ListItemProps } from 'antd/es/list'
 import { MenuOutlined } from '@ant-design/icons'
 import { useSortable } from '@dnd-kit/sortable'
@@ -31,9 +31,8 @@ const SortableListItem: React.FC<SortableListItemProps> = ({ children, id, style
   )
 }
 
-const ListItemContent = styled.div`
+const ListItemContent = styled(Flex)`
   max-width: 75%;
-  display: flex;
   gap: 16px;
 `
 
