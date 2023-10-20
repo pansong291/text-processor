@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo } from 'react'
 import { App as AntdApp, Button, Flex, Form, Input, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { createOperator, createProcedure, deleteStorage, execute, getStorage, randomIdentifier, setStorage, use$self, useUpdater } from '@/utils'
+import {
+  createOperator,
+  createProcedure,
+  deleteStorage,
+  execute,
+  getStorage,
+  randomIdentifier,
+  setStorage,
+  use$self,
+  useUpdater,
+  validateJavaScriptIdentifier
+} from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
 import { DeleteOutlined, EditOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
@@ -59,6 +70,28 @@ const Content: React.FC = () => {
     }
   }
 
+  /**
+   * 检查导入数据的合法性，主要为函数名称的校验及其唯一性
+   */
+  const checkImportDataValid = (globalFunctionList: Array<FuncInstance>, procList: Array<ProcedureJSON>) => {
+    const gfSet = new Set<string>()
+    for (const f of globalFunctionList) {
+      const msg = validateJavaScriptIdentifier(f.id)
+      if (msg) throw new SyntaxError(`${f.id} ${msg}`)
+      if (gfSet.has(f.id)) throw new Error(`全局函数中存在重复的名称 ${f.id}`)
+      gfSet.add(f.id)
+    }
+    for (const pr of procList) {
+      const funcSet = new Set<string>()
+      pr.functionList.forEach((f) => {
+        const msg = validateJavaScriptIdentifier(f.id)
+        if (msg) throw new SyntaxError(`${f.id} ${msg}`)
+        if (funcSet.has(f.id)) throw new Error(`${pr.name} 存在重复的函数名称 ${f.id}`)
+        funcSet.add(f.id)
+      })
+    }
+  }
+
   const onImportClick = () => {
     try {
       if (!importJSON) throw new Error('请选择文件或输入 JSON 文本')
@@ -66,6 +99,8 @@ const Content: React.FC = () => {
       const globalFunctionList: Array<FuncInstance> = data.globalFunctionList || []
 
       const overrideImport = () => {
+        const procList: Array<ProcedureJSON> = data.procedureList || []
+        checkImportDataValid(globalFunctionList, procList)
         for (const f of globalFunctionList) {
           setGlobalOperatorList((p) => {
             const op = p.find((o) => o.id === f.id)
@@ -81,26 +116,26 @@ const Content: React.FC = () => {
           })
           setStorage(`$global-${f.id}`, f.definition)
         }
-        const procList: Array<ProcedureJSON> = data.procedureList || []
-        setProcedureList((p) => {
-          for (const pr of procList) {
-            const pid = randomIdentifier()
-            p.push(
-              createProcedure({
-                ...pr,
-                id: pid,
-                operatorList: pr.functionList.map((f) => {
-                  setStorage(`$self-${pid}-${f.id}`, f.definition)
-                  return {
-                    id: f.id,
-                    declaration: f.declaration,
-                    doc: f.doc
-                  }
-                })
-              })
-            )
-          }
-        })
+        for (const pr of procList) {
+          const pid = randomIdentifier()
+          const np = createProcedure({
+            ...pr,
+            id: pid,
+            operatorList: pr.functionList.map((f) => {
+              setStorage(`$self-${pid}-${f.id}`, f.definition)
+              return {
+                id: f.id,
+                declaration: f.declaration,
+                doc: f.doc
+              }
+            })
+          })
+          setProcedureList((p) => {
+            p.push(np)
+          })
+        }
+        setImportModalOpen(false)
+        setImportJSON('')
         message.success('导入成功')
       }
 
