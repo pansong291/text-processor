@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react'
-import { App as AntdApp, Button, Flex, Form, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
+import React, { useEffect, useMemo } from 'react'
+import { App as AntdApp, Button, Flex, Form, Input, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
 import { createOperator, createProcedure, deleteStorage, execute, getStorage, randomIdentifier, setStorage, use$self, useUpdater } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
-import { DeleteOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import ProcedureDrawer from '@/components/ProcedureDrawer'
 import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
@@ -32,8 +32,18 @@ const Content: React.FC = () => {
 
   const [isGlobal, setIsGlobal] = useUpdater(false)
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
+  const [importModalOpen, setImportModalOpen] = useUpdater(false)
+  const [importJSON, setImportJSON] = useUpdater('')
+  const validJSON = useMemo(() => {
+    try {
+      JSON.parse(importJSON)
+      return true
+    } catch (e) {
+      return false
+    }
+  }, [importJSON])
 
-  const onImportClick = () => {
+  const chooseImportFile = () => {
     const path = window.utools?.showOpenDialog({
       properties: ['openFile', 'treatPackageAsDirectory', 'dontAddToRecent'],
       filters: [
@@ -43,8 +53,17 @@ const Content: React.FC = () => {
     })?.[0]
     if (!path) return
     try {
-      const data = JSON.parse(window._preload.readFrom(path))
-      const globalFunctionList: Array<FuncInstance> = data.globalFunctionList
+      setImportJSON(window._preload.readFrom(path))
+    } catch (e) {
+      message.error(String(e))
+    }
+  }
+
+  const onImportClick = () => {
+    try {
+      if (!importJSON) throw new Error('请选择文件或输入 JSON 文本')
+      const data = JSON.parse(importJSON)
+      const globalFunctionList: Array<FuncInstance> = data.globalFunctionList || []
 
       const overrideImport = () => {
         for (const f of globalFunctionList) {
@@ -62,7 +81,7 @@ const Content: React.FC = () => {
           })
           setStorage(`$global-${f.id}`, f.definition)
         }
-        const procList: Array<ProcedureJSON> = data.procedureList
+        const procList: Array<ProcedureJSON> = data.procedureList || []
         setProcedureList((p) => {
           for (const pr of procList) {
             const pid = randomIdentifier()
@@ -221,7 +240,7 @@ const Content: React.FC = () => {
           />
           <Space.Compact>
             <Button type="default" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
-            <Button title="导入" icon={<ImportOutlined />} onClick={onImportClick} />
+            <Button title="导入" icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)} />
             <Button title="导出" icon={<ExportOutlined />} onClick={onExportClick} />
             <Button type={dark ? 'primary' : 'default'} title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
           </Space.Compact>
@@ -292,6 +311,39 @@ const Content: React.FC = () => {
           setProcedure(BLANK_PROCEDURE)
         }}
       />
+      <Modal title="选择文件或输入 JSON" centered open={importModalOpen} onOk={onImportClick} onCancel={() => setImportModalOpen(false)}>
+        <Flex vertical gap={8}>
+          <Flex justify="space-between">
+            <Button type="primary" onClick={chooseImportFile}>
+              选择文件
+            </Button>
+            <Button
+              shape="circle"
+              icon={<EditOutlined />}
+              title="编辑 JSON"
+              disabled={!validJSON}
+              onClick={() => {
+                window.utools?.redirect(['JSON 编辑器', 'Json'], { type: 'text', data: importJSON })
+              }}
+            />
+          </Flex>
+          <Input.TextArea
+            autoSize={{ minRows: 6, maxRows: 12 }}
+            placeholder="输入 JSON 文本"
+            status={validJSON || !importJSON ? '' : 'error'}
+            value={importJSON}
+            onChange={(e) => setImportJSON(e.target.value)}
+            onDrop={(e) => {
+              try {
+                const file: any = e.dataTransfer.files[0]
+                setImportJSON(window._preload.readFrom(file.path))
+              } catch (ex) {
+                message.error(String(ex))
+              }
+            }}
+          />
+        </Flex>
+      </Modal>
     </ContentStyle>
   )
 }
