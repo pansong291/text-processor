@@ -1,10 +1,21 @@
-import React, { useEffect } from 'react'
-import { App as AntdApp, Button, Form, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
+import React, { useEffect, useMemo } from 'react'
+import { App as AntdApp, Button, Flex, Form, Input, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
-import { createOperator, createProcedure, deleteStorage, execute, getStorage, randomIdentifier, setStorage, use$self, useUpdater } from '@/utils'
+import {
+  createOperator,
+  createProcedure,
+  deleteStorage,
+  execute,
+  getStorage,
+  randomIdentifier,
+  setStorage,
+  use$self,
+  useUpdater,
+  validateJavaScriptIdentifier
+} from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
-import { DeleteOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import ProcedureDrawer from '@/components/ProcedureDrawer'
 import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
@@ -32,8 +43,18 @@ const Content: React.FC = () => {
 
   const [isGlobal, setIsGlobal] = useUpdater(false)
   const [procedure, setProcedure] = useUpdater<ProcedureConfig>(BLANK_PROCEDURE)
+  const [importModalOpen, setImportModalOpen] = useUpdater(false)
+  const [importJSON, setImportJSON] = useUpdater('')
+  const validJSON = useMemo(() => {
+    try {
+      JSON.parse(importJSON)
+      return true
+    } catch (e) {
+      return false
+    }
+  }, [importJSON])
 
-  const onImportClick = () => {
+  const chooseImportFile = () => {
     const path = window.utools?.showOpenDialog({
       properties: ['openFile', 'treatPackageAsDirectory', 'dontAddToRecent'],
       filters: [
@@ -43,10 +64,43 @@ const Content: React.FC = () => {
     })?.[0]
     if (!path) return
     try {
-      const data = JSON.parse(window._preload.readFrom(path))
-      const globalFunctionList: Array<FuncInstance> = data.globalFunctionList
+      setImportJSON(window._preload.readFrom(path))
+    } catch (e) {
+      message.error(String(e))
+    }
+  }
+
+  /**
+   * 检查导入数据的合法性，主要为函数名称的校验及其唯一性
+   */
+  const checkImportDataValid = (globalFunctionList: Array<FuncInstance>, procList: Array<ProcedureJSON>) => {
+    const gfSet = new Set<string>()
+    for (const f of globalFunctionList) {
+      const msg = validateJavaScriptIdentifier(f.id)
+      if (msg) throw new SyntaxError(`${f.id} ${msg}`)
+      if (gfSet.has(f.id)) throw new Error(`全局函数中存在重复的名称 ${f.id}`)
+      gfSet.add(f.id)
+    }
+    for (const pr of procList) {
+      const funcSet = new Set<string>()
+      pr.functionList.forEach((f) => {
+        const msg = validateJavaScriptIdentifier(f.id)
+        if (msg) throw new SyntaxError(`${f.id} ${msg}`)
+        if (funcSet.has(f.id)) throw new Error(`${pr.name} 存在重复的函数名称 ${f.id}`)
+        funcSet.add(f.id)
+      })
+    }
+  }
+
+  const onImportClick = () => {
+    try {
+      if (!importJSON) throw new Error('请选择文件或输入 JSON 文本')
+      const data = JSON.parse(importJSON)
+      const globalFunctionList: Array<FuncInstance> = data.globalFunctionList || []
 
       const overrideImport = () => {
+        const procList: Array<ProcedureJSON> = data.procedureList || []
+        checkImportDataValid(globalFunctionList, procList)
         for (const f of globalFunctionList) {
           setGlobalOperatorList((p) => {
             const op = p.find((o) => o.id === f.id)
@@ -62,26 +116,26 @@ const Content: React.FC = () => {
           })
           setStorage(`$global-${f.id}`, f.definition)
         }
-        const procList: Array<ProcedureJSON> = data.procedureList
-        setProcedureList((p) => {
-          for (const pr of procList) {
-            const pid = randomIdentifier()
-            p.push(
-              createProcedure({
-                ...pr,
-                id: pid,
-                operatorList: pr.functionList.map((f) => {
-                  setStorage(`$self-${pid}-${f.id}`, f.definition)
-                  return {
-                    id: f.id,
-                    declaration: f.declaration,
-                    doc: f.doc
-                  }
-                })
-              })
-            )
-          }
-        })
+        for (const pr of procList) {
+          const pid = randomIdentifier()
+          const np = createProcedure({
+            ...pr,
+            id: pid,
+            operatorList: pr.functionList.map((f) => {
+              setStorage(`$self-${pid}-${f.id}`, f.definition)
+              return {
+                id: f.id,
+                declaration: f.declaration,
+                doc: f.doc
+              }
+            })
+          })
+          setProcedureList((p) => {
+            p.push(np)
+          })
+        }
+        setImportModalOpen(false)
+        setImportJSON('')
         message.success('导入成功')
       }
 
@@ -202,12 +256,12 @@ const Content: React.FC = () => {
   }, [globalFuncConfigMap, outputAction, procedureList])
 
   return (
-    <ContentStyle>
-      <div className="title-line">
+    <ContentStyle vertical gap={16}>
+      <Flex justify="space-between">
         <Form.Item label="输出模式">
           <Segmented options={outputActionOptions} value={outputAction} onChange={(v) => setOutputAction(v as OutputAction)} />
         </Form.Item>
-        <div className="action-btn-wrap">
+        <Flex gap={8}>
           <Button
             type="primary"
             shape="circle"
@@ -221,12 +275,12 @@ const Content: React.FC = () => {
           />
           <Space.Compact>
             <Button type="default" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
-            <Button title="导入" icon={<ImportOutlined />} onClick={onImportClick} />
+            <Button title="导入" icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)} />
             <Button title="导出" icon={<ExportOutlined />} onClick={onExportClick} />
             <Button type={dark ? 'primary' : 'default'} title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
           </Space.Compact>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
       <SortableList
         bordered
         rowKey="id"
@@ -292,28 +346,48 @@ const Content: React.FC = () => {
           setProcedure(BLANK_PROCEDURE)
         }}
       />
+      <Modal title="选择文件或输入 JSON" centered open={importModalOpen} onOk={onImportClick} onCancel={() => setImportModalOpen(false)}>
+        <Flex vertical gap={8}>
+          <Flex justify="space-between">
+            <Button type="primary" onClick={chooseImportFile}>
+              选择文件
+            </Button>
+            <Button
+              shape="circle"
+              icon={<EditOutlined />}
+              title="编辑 JSON"
+              disabled={!validJSON}
+              onClick={() => {
+                window.utools?.redirect(['JSON 编辑器', 'Json'], { type: 'text', data: importJSON })
+              }}
+            />
+          </Flex>
+          <Input.TextArea
+            autoSize={{ minRows: 6, maxRows: 12 }}
+            placeholder="输入 JSON 文本"
+            status={validJSON || !importJSON ? '' : 'error'}
+            value={importJSON}
+            onChange={(e) => setImportJSON(e.target.value)}
+            onDrop={(e) => {
+              try {
+                const file: any = e.dataTransfer.files[0]
+                setImportJSON(window._preload.readFrom(file.path))
+              } catch (ex) {
+                message.error(String(ex))
+              }
+            }}
+          />
+        </Flex>
+      </Modal>
     </ContentStyle>
   )
 }
 
-const ContentStyle = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+const ContentStyle = styled(Flex)`
   padding: 16px 24px;
 
-  .title-line {
-    display: flex;
-    justify-content: space-between;
-
-    .ant-form-item {
-      margin-bottom: 0;
-    }
-
-    .action-btn-wrap {
-      display: flex;
-      gap: 8px;
-    }
+  .ant-form-item {
+    margin-bottom: 0;
   }
 `
 

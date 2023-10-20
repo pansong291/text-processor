@@ -2,7 +2,7 @@ import React from 'react'
 import { FuncInstance, OperatorConfig } from '@/types/base'
 import { useFuncConfig, useGlobalOperatorList } from '@/components/context/StorageProvider'
 import styled from 'styled-components'
-import { App as AntdApp, Button, Form, Modal, Typography } from 'antd'
+import { App as AntdApp, Button, Flex, Form, Modal, Typography } from 'antd'
 import { createOperator, deleteStorage, setStorage } from '@/utils'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import SortableList from '@/components/base/SortableList'
@@ -23,12 +23,12 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
   }
 
   return (
-    <DrawerContent>
+    <DrawerContent vertical gap={8}>
       <Form>
         <Form.Item label="函数列表" style={{ marginBottom: 0 }}>
-          <div className="func-add-btn-wrap">
+          <Flex justify="flex-end">
             <button
-              className="ant-drawer-close"
+              className="ant-drawer-close add-func-btn"
               title="添加函数"
               onClick={() => {
                 const operator = createOperator()
@@ -42,7 +42,7 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
               }}>
               <PlusOutlined />
             </button>
-          </div>
+          </Flex>
         </Form.Item>
       </Form>
       <SortableList
@@ -101,25 +101,17 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
   )
 }
 
-const DrawerContent = styled.div`
+const DrawerContent = styled(Flex)`
   width: 100%;
   height: max-content;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 
   .ant-form-item {
     margin-bottom: 16px;
   }
 
-  .func-add-btn-wrap {
-    display: flex;
-    justify-content: flex-end;
-
-    button {
-      height: 24px;
-      margin-right: 0;
-    }
+  button.add-func-btn {
+    height: 24px;
+    margin-right: 0;
   }
 
   .ant-list {

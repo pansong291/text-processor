@@ -3,6 +3,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { useTheme } from '@/components/context/ThemeProvider'
 import { isPrimitive } from '@/utils'
+import { Flex } from 'antd'
 
 type ObjectViewerProps = {
   className?: string
@@ -66,16 +67,14 @@ const ObjectViewer: React.FC<ObjectViewerProps> = (props) => {
   }
 
   return (
-    <ObjectViewStyle className={props.className} style={{ ...props.style, backgroundColor: palette.base00 }}>
+    <ObjectViewStyle className={props.className} style={{ ...props.style, backgroundColor: palette.base00 }} vertical>
       <ObjectView data={{ data: catchError() }} styles={{ fontFamily: 'var(--font-family-mono)' }} palette={palette} />
     </ObjectViewStyle>
   )
 }
 
-const ObjectViewStyle = styled.div`
+const ObjectViewStyle = styled(Flex)`
   padding: 0.5em 2em 0.5em 0;
-  display: flex;
-  flex-direction: column;
   min-height: 6.4em;
   overflow: auto;
 

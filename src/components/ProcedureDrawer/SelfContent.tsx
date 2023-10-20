@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
-import { App as AntdApp, Button, Form, Modal, Select, Switch } from 'antd'
+import { App as AntdApp, Button, Flex, Form, Modal, Select, Switch } from 'antd'
 import RegexInput from '@/components/base/RegexInput'
 import {
   createOperator,
@@ -85,8 +85,8 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
   }, [featureEnabled, procedure.id, procedure.name, procedure.desc])
 
   return (
-    <DrawerContent>
-      <div className="left-wrap">
+    <DrawerContent justify="space-between" align="flex-start" gap={16}>
+      <Flex vertical flex={'1 1 50%'} gap={6}>
         <Form>
           <Form.Item label="独立入口" tooltip={{ title: '通过独立入口触发流程时将会忽略匹配规则与排除规则，直接执行本流程' }}>
             <Switch checked={featureEnabled} onChange={onFeatureEnableChange} />
@@ -118,9 +118,9 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
             />
           </Form.Item>
           <Form.Item label="函数列表" style={{ marginBottom: 0 }}>
-            <div className="func-add-btn-wrap">
+            <Flex justify="flex-end">
               <button
-                className="ant-drawer-close"
+                className="ant-drawer-close add-func-btn"
                 title="添加函数"
                 onClick={() => {
                   const operator = createOperator()
@@ -134,7 +134,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                 }}>
                 <PlusOutlined />
               </button>
-            </div>
+            </Flex>
           </Form.Item>
         </Form>
         <SortableList
@@ -186,14 +186,14 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
             </SortableListItem>
           )}
         />
-      </div>
-      <div className="right-wrap">
+      </Flex>
+      <Flex vertical flex={'1 1 50%'} gap={16} style={{ overflow: 'hidden' }}>
         <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
         <div className="obj-view-wrap">
           <ObjectViewer className="obj-viewer" data={testOutput} />
         </div>
         <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={String(testOutput)} readOnly />
-      </div>
+      </Flex>
     </DrawerContent>
   )
 }
@@ -218,33 +218,17 @@ const RegexTooltipContent: React.FC<{ content: React.ReactNode; data: RegexConfi
   )
 }
 
-const DrawerContent = styled.div`
+const DrawerContent = styled(Flex)`
   width: 100%;
   height: max-content;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-
-  .left-wrap {
-    flex: 1 1 50%;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
 
   .ant-form-item {
     margin-bottom: 16px;
   }
 
-  .func-add-btn-wrap {
-    display: flex;
-    justify-content: flex-end;
-
-    button {
-      height: 24px;
-      margin-right: 0;
-    }
+  button.add-func-btn {
+    height: 24px;
+    margin-right: 0;
   }
 
   .ant-list {
@@ -255,14 +239,6 @@ const DrawerContent = styled.div`
     .sortable-list-item-content {
       gap: 8px;
     }
-  }
-
-  .right-wrap {
-    flex: 1 1 50%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
   }
 
   .obj-view-wrap {
