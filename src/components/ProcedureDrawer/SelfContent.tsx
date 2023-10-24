@@ -181,7 +181,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                 />
               ]}>
               <Button className="border-less" size="small" onClick={() => onEditClick(item)}>
-                {item.id}
+                {item.doc || item.id}
               </Button>
             </SortableListItem>
           )}
