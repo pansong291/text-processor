@@ -6,6 +6,12 @@ export const defaultElementType = 'string'
 
 export const defaultFunctionType = 'Function'
 
+export const outputActionOptions = [
+  { label: '仅复制', value: 'copy' },
+  { label: '复制粘贴', value: 'copy-paste' },
+  { label: '仅输入', value: 'type-input' }
+]
+
 export const utoolsLib = {
   filePath: 'ts:utools-api-types/utools.api.d.ts',
   content: `interface UBrowser {
@@ -883,13 +889,18 @@ export function createProcedure(old?: ProcedureConfig): ProcedureConfig {
     id,
     name: old?.name || id,
     desc: old?.desc || '',
+    condition: {
+      regex: old?.condition?.regex || '',
+      flags: old?.condition?.flags || ''
+    },
+    outputAction: old?.outputAction || 'copy',
     match: {
-      regex: old?.match.regex || '',
-      flags: old?.match.flags || ''
+      regex: old?.match?.regex || '',
+      flags: old?.match?.flags || ''
     },
     exclude: {
-      regex: old?.exclude.regex || '',
-      flags: old?.exclude.flags || ''
+      regex: old?.exclude?.regex || '',
+      flags: old?.exclude?.flags || ''
     },
     end: old?.end || '',
     operatorList: old?.operatorList?.map?.((o) => createOperator(o)) || []
@@ -990,11 +1001,14 @@ export function deepMerge<T>(obj: T, ...partials: DeepPartial<T>[]): T {
   return obj
 }
 
-export function createUtoolsFeature(procedure: Pick<ProcedureConfig, 'id' | 'name' | 'desc'>): any {
+export function createUtoolsFeature(procedure: Pick<ProcedureConfig, 'id' | 'name' | 'desc' | 'condition'>): any {
+  const cmd = procedure.condition.regex
+    ? { type: 'regex', label: procedure.name, match: `/${procedure.condition.regex}/${procedure.condition.flags}` }
+    : { type: 'over', label: procedure.name, maxLength: 999999999 }
   return {
     code: procedure.id,
     explain: procedure.desc || procedure.name,
     platform: ['darwin', 'win32', 'linux'],
-    cmds: [{ type: 'over', label: procedure.name, maxLength: 999999999 }]
+    cmds: [cmd]
   }
 }

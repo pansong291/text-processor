@@ -33,6 +33,8 @@ export type ProcedureConfig = {
   id: string
   name: string
   desc: string
+  condition: RegexConfig
+  outputAction: OutputAction
   match: RegexConfig
   exclude: RegexConfig
   end: string

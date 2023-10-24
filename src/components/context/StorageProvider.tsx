@@ -114,6 +114,8 @@ function defaultProcedureList(): Array<ProcedureConfig> {
       id: 'example',
       name: '示例流程',
       desc: '展示流程和函数的定义与使用',
+      condition: {},
+      outputAction: 'copy',
       match: {},
       exclude: {},
       end: '',
