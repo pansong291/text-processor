@@ -8,6 +8,7 @@ import {
   createUtoolsFeature,
   deleteStorage,
   execute,
+  outputActionOptions,
   setStorage,
   use$self,
   useUpdater
@@ -82,17 +83,42 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
       window.utools?.removeFeature(procedure.id)
       window.utools?.setFeature(createUtoolsFeature(procedure))
     }
-  }, [featureEnabled, procedure.id, procedure.name, procedure.desc])
+  }, [featureEnabled, procedure.id, procedure.name, procedure.desc, procedure.condition])
 
   return (
     <DrawerContent justify="space-between" align="flex-start" gap={16}>
       <Flex vertical flex={'1 1 50%'} gap={6}>
         <Form>
-          <Form.Item label="独立入口" tooltip={{ title: '通过独立入口触发流程时将会忽略匹配规则与排除规则，直接执行本流程' }}>
+          <Form.Item label="独立入口" tooltip={{ title: '通过独立入口触发流程时将会忽略匹配规则与排除规则' }}>
             <Switch checked={featureEnabled} onChange={onFeatureEnableChange} />
           </Form.Item>
+          {featureEnabled && (
+            <>
+              <Form.Item
+                label="展示条件"
+                tooltip={{
+                  title: (
+                    <RegexTooltipContent
+                      content={
+                        '展示独立入口的正则表达式，当指定文本满足条件后才会展示该独立入口。受限于 uTools 会忽略「任意匹配的正则」，若要匹配任意文本请留空。'
+                      }
+                      data={procedure.condition}
+                    />
+                  )
+                }}>
+                <RegexInput value={procedure.condition} onChange={(r) => onChange({ ...procedure, condition: r })} />
+              </Form.Item>
+              <Form.Item label="输出模式" tooltip={{ title: '通过独立入口触发时的输出模式' }}>
+                <Select
+                  options={outputActionOptions}
+                  value={procedure.outputAction}
+                  onChange={(o) => onChange({ ...procedure, outputAction: o })}
+                />
+              </Form.Item>
+            </>
+          )}
           <Form.Item
-            label="正则匹配"
+            label="匹配规则"
             tooltip={{
               title: (
                 <RegexTooltipContent
@@ -104,7 +130,7 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
             <RegexInput value={procedure.match} onChange={(r) => onChange({ ...procedure, match: r })} />
           </Form.Item>
           <Form.Item
-            label="正则排除"
+            label="排除规则"
             tooltip={{ title: <RegexTooltipContent content={'排除的正则表达式，优先级高于匹配规则。'} data={procedure.exclude} /> }}>
             <RegexInput value={procedure.exclude} onChange={(r) => onChange({ ...procedure, exclude: r })} />
           </Form.Item>

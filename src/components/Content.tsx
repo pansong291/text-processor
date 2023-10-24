@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import { App as AntdApp, Button, Flex, Form, Input, Modal, Segmented, SegmentedProps, Space, Typography } from 'antd'
+import { App as AntdApp, Button, Flex, Form, Input, Modal, Segmented, Space, Typography } from 'antd'
 import { useTheme } from '@/components/context/ThemeProvider'
 import {
   createOperator,
@@ -7,6 +7,7 @@ import {
   deleteStorage,
   execute,
   getStorage,
+  outputActionOptions,
   randomIdentifier,
   setStorage,
   use$self,
@@ -33,13 +34,17 @@ import { FuncInstance, OutputAction, ProcedureConfig, ProcedureJSON, StorageKey 
 import { getConfigMap, useFuncConfig, useGlobalOperatorList, useOutputAction, useProcedureList } from '@/components/context/StorageProvider'
 import { useTestString } from '@/components/context/TestStringProvider'
 
-const BLANK_PROCEDURE: ProcedureConfig = { id: '', name: '', desc: '', match: {}, exclude: {}, end: '', operatorList: [] }
-
-const outputActionOptions: SegmentedProps['options'] = [
-  { label: '仅复制', value: 'copy' },
-  { label: '复制粘贴', value: 'copy-paste' },
-  { label: '仅输入', value: 'type-input' }
-]
+const BLANK_PROCEDURE: ProcedureConfig = {
+  id: '',
+  name: '',
+  desc: '',
+  condition: {},
+  outputAction: 'copy',
+  match: {},
+  exclude: {},
+  end: '',
+  operatorList: []
+}
 
 const Content: React.FC = () => {
   const { modal, message, notification } = AntdApp.useApp()
@@ -183,6 +188,8 @@ const Content: React.FC = () => {
           id: p.id,
           name: p.name,
           desc: p.desc,
+          condition: p.condition,
+          outputAction: p.outputAction,
           match: p.match,
           exclude: p.exclude,
           end: p.end,
@@ -212,7 +219,8 @@ const Content: React.FC = () => {
     window.utools?.onPluginEnter(({ code, type, payload }) => {
       if (type !== 'over') return
       let procedure
-      if (code === '@process') {
+      const execByOrder = code === '@process'
+      if (execByOrder) {
         procedure = procedureList.find((p) => {
           try {
             const match = !p.match.regex || new RegExp(p.match.regex, p.match.flags).test(payload)
@@ -240,7 +248,8 @@ const Content: React.FC = () => {
             procedure.end
           )
         )
-        switch (outputAction) {
+        const outputMode = execByOrder ? outputAction : procedure.outputAction
+        switch (outputMode) {
           case 'copy':
             window.utools?.copyText(result)
             window.utools?.hideMainWindow()
