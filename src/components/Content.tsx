@@ -15,7 +15,16 @@ import {
 } from '@/utils'
 import MoonIcon from '@/components/base/MoonIcon'
 import styled from 'styled-components'
-import { DeleteOutlined, EditOutlined, ExportOutlined, FormOutlined, FunctionOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+  BulbOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  ExportOutlined,
+  FormOutlined,
+  FunctionOutlined,
+  ImportOutlined,
+  PlusOutlined
+} from '@ant-design/icons'
 import ProcedureDrawer from '@/components/ProcedureDrawer'
 import SortableListItem from '@/components/base/SortableListItem'
 import SortableList from '@/components/base/SortableList'
@@ -275,6 +284,10 @@ const Content: React.FC = () => {
           />
           <Space.Compact>
             <Button type="default" title="全局函数" icon={<FunctionOutlined />} onClick={() => setIsGlobal(true)} />
+            <Button
+              icon={<BulbOutlined />}
+              onClick={() => window.utools?.shellOpenExternal('https://yuanliao.info/d/19804-text-processor-flatmap')}
+            />
             <Button title="导入" icon={<ImportOutlined />} onClick={() => setImportModalOpen(true)} />
             <Button title="导出" icon={<ExportOutlined />} onClick={onExportClick} />
             <Button type={dark ? 'primary' : 'default'} title="暗黑主题" icon={<MoonIcon />} onClick={() => setDark((d) => !d)} />
