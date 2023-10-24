@@ -61,8 +61,8 @@ const Content: React.FC = () => {
   const [importJSON, setImportJSON] = useUpdater('')
   const validJSON = useMemo(() => {
     try {
-      JSON.parse(importJSON)
-      return true
+      if (!importJSON.startsWith('{') && !importJSON.startsWith('[')) return false
+      return !!JSON.parse(importJSON)
     } catch (e) {
       return false
     }
