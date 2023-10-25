@@ -217,7 +217,7 @@ const Content: React.FC = () => {
 
   useEffect(() => {
     window.utools?.onPluginEnter(({ code, type, payload }) => {
-      if (type !== 'over') return
+      if (!['over', 'regex'].includes(type)) return
       let procedure
       const execByOrder = code === '@process'
       if (execByOrder) {
