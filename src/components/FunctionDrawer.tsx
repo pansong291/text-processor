@@ -45,8 +45,7 @@ const FunctionDrawer: React.FC<FunctionDrawerProps> = ({
     <Drawer
       placement="right"
       width="80%"
-      headerStyle={{ padding: '8px 16px' }}
-      bodyStyle={{ padding: 0 }}
+      styles={{ header: { padding: '8px 16px' }, body: { padding: 0 } }}
       title={
         <>
           <Button type="text" size="small" onClick={() => setModalValues([funcInst.id, funcInst.declaration || '', funcInst.doc || ''])}>

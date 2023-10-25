@@ -58,7 +58,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
       width="80%"
       style={{ transform: `translateX(${push}%)`, transition: 'transform .3s' }}
       push={false}
-      headerStyle={{ padding: '8px 16px' }}
+      styles={{ header: { padding: '8px 16px' } }}
       title={
         isGlobal ? (
           '全局函数'
