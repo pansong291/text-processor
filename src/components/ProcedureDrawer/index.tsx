@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Button, Typography } from 'antd'
 import FunctionDrawer from '@/components/FunctionDrawer'
 import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
@@ -23,7 +23,8 @@ TODO 待实现功能：
  - 全局类型定义
  */
 
-const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, onChange, onFullyClose }) => {
+const ProcedureDrawer: React.FC<ProcedureDrawerProps> = (props) => {
+  const { isGlobal, procedure, onChange, onFullyClose } = props
   const [push, setPush] = useUpdater(0)
   const { globalOperatorList, setGlobalOperatorList } = useGlobalOperatorList()
   const funcConfigContext = useFuncConfig()
@@ -43,14 +44,10 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
         onChange(procedure)
       })
 
-  const onOpenEditor = (f: FuncInstance) => {
+  const onOpenEditor = useCallback((f: FuncInstance) => {
     setPush(-25)
     setFuncInst(f)
-  }
-
-  const onCloseDrawer = () => {
-    onFullyClose()
-  }
+  }, [])
 
   return (
     <Drawer
@@ -74,7 +71,7 @@ const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({ isGlobal, procedure, 
         )
       }
       open={isGlobal || !!procedure.id}
-      onFullyClose={onCloseDrawer}>
+      onFullyClose={onFullyClose}>
       {isGlobal ? (
         <GlobalContent onOpenEditor={onOpenEditor} />
       ) : (

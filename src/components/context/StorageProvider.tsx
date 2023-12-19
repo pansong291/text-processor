@@ -1,12 +1,12 @@
 import React, { createContext, useContext } from 'react'
-import { FuncConfig, OperatorConfig, OutputAction, ProcedureConfig, Processor, StrMap } from '@/types/base'
+import { FuncConfig, OperatorConfig, ProcedureConfig, Processor, StrMap } from '@/types/base'
 import { createOperator, createProcedure, getStorage, useStorage, useUpdater } from '@/utils'
 
 type Updater<T> = React.Dispatch<Processor<T>>
 
-type OutputActionContextType<C = OutputAction> = {
-  outputAction: C
-  setOutputAction: Updater<C>
+type TestStringContextType = {
+  testStr: string
+  setTestStr: React.Dispatch<Processor<string>>
 }
 
 type GlobalOperatorListContextType<C = Array<OperatorConfig>> = {
@@ -26,9 +26,9 @@ type FuncConfigMapContextType<C = StrMap<FuncConfig>> = {
   setSelfFuncConfigMap: Updater<C>
 }
 
-const OutputActionContext = createContext<OutputActionContextType>({
-  outputAction: 'copy',
-  setOutputAction() {}
+const TestStringContext = createContext<TestStringContextType>({
+  testStr: '',
+  setTestStr() {}
 })
 
 const GlobalOperatorListContext = createContext<GlobalOperatorListContextType>({
@@ -49,7 +49,7 @@ const FuncConfigMapContext = createContext<FuncConfigMapContextType>({
 })
 
 const StorageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [outputAction, setOutputAction] = useStorage<OutputAction>('output-action', (o) => o || 'copy')
+  const [testStr, setTestStr] = useStorage('test-str', (o) => o || '')
   const [globalOperatorList, setGlobalOperatorList] = useStorage<Array<OperatorConfig>>(
     'global-operator-list',
     (o) => o?.map?.(createOperator) || defaultGlobalOperatorList()
@@ -60,13 +60,13 @@ const StorageProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   )
 
   return (
-    <OutputActionContext.Provider value={{ outputAction, setOutputAction }}>
+    <TestStringContext.Provider value={{ testStr, setTestStr }}>
       <GlobalOperatorListContext.Provider value={{ globalOperatorList, setGlobalOperatorList }}>
         <ProcedureListContext.Provider value={{ procedureList, setProcedureList }}>
           <FuncConfigMapProvider>{children}</FuncConfigMapProvider>
         </ProcedureListContext.Provider>
       </GlobalOperatorListContext.Provider>
-    </OutputActionContext.Provider>
+    </TestStringContext.Provider>
   )
 }
 
@@ -82,7 +82,7 @@ const FuncConfigMapProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   )
 }
 
-export const useOutputAction = () => useContext(OutputActionContext)
+export const useTestString = () => useContext(TestStringContext)
 
 export const useGlobalOperatorList = () => useContext(GlobalOperatorListContext)
 
@@ -114,10 +114,7 @@ function defaultProcedureList(): Array<ProcedureConfig> {
       id: 'example',
       name: '示例流程',
       desc: '展示流程和函数的定义与使用',
-      condition: {},
-      outputAction: 'copy',
-      match: {},
-      exclude: {},
+      outputAction: 'question',
       end: '',
       operatorList: [
         { id: 'splitByReg', declaration: '', doc: '按正则分割字符串' },

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { FuncInstance, OperatorConfig } from '@/types/base'
 import { useFuncConfig, useGlobalOperatorList } from '@/components/context/StorageProvider'
 import styled from 'styled-components'
@@ -18,9 +18,12 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ onOpenEditor }) => {
   const { globalOperatorList, setGlobalOperatorList } = useGlobalOperatorList()
   const { globalFuncConfigMap, setGlobalFuncConfigMap } = useFuncConfig()
 
-  const onEditClick = (item: OperatorConfig) => {
-    onOpenEditor(Object.assign({ id: item.id }, globalFuncConfigMap[item.id]))
-  }
+  const onEditClick = useCallback(
+    (item: OperatorConfig) => {
+      onOpenEditor(Object.assign({ id: item.id }, globalFuncConfigMap[item.id]))
+    },
+    [onOpenEditor, globalFuncConfigMap]
+  )
 
   return (
     <DrawerContent vertical gap={8}>
@@ -116,10 +119,11 @@ const DrawerContent = styled(Flex)`
 
   .ant-list {
     .ant-list-item {
-      padding: 6px 0 6px 12px;
+      padding: 0 0 0 6px;
     }
 
     .sortable-list-item-content {
+      padding: 6px;
       gap: 8px;
     }
   }
