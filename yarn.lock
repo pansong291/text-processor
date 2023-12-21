@@ -2054,6 +2054,11 @@ pify@^4.0.1:
   resolved "https://registry.npmmirror.com/pify/-/pify-4.0.1.tgz#4b2cd25c50d598735c50292224fd8c6df41e3231"
   integrity sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==
 
+pinyin-match@^1.2.5:
+  version "1.2.5"
+  resolved "https://registry.npmmirror.com/pinyin-match/-/pinyin-match-1.2.5.tgz#38633596412e8d3e6fa6b25a0c53e10746dcda45"
+  integrity sha512-+F3bi5v95enkqSJ0nD1e2fGp8Uj3YCRBzka3DlCQ4tyurfqYmAChLR3aAO/c/Pk+xBgvEx9zI35HoyYATSb0mw==
+
 postcss-value-parser@^4.0.2:
   version "4.2.0"
   resolved "https://registry.npmmirror.com/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz#723c09920836ba6d3e5af019f92bc0971c02e514"

@@ -23,7 +23,7 @@ export type FMCF<T = any> = FlatMapCallbackFunc<T>
 
 export type FuncInstance = FuncConfig & Identifiable
 
-export type StorageKey = `$global-${string}` | `$self-${string}-${string}` | 'global-operator-list' | 'procedure-list' | 'output-action'
+export type StorageKey = `$global-${string}` | `$self-${string}-${string}` | 'global-operator-list' | 'procedure-list' | 'test-str'
 
 export type OperatorConfig = FuncDeclaration & Identifiable
 
@@ -33,15 +33,12 @@ export type ProcedureConfig = {
   id: string
   name: string
   desc: string
-  condition: RegexConfig
   outputAction: OutputAction
-  match: RegexConfig
-  exclude: RegexConfig
   end: string
   operatorList: Array<OperatorConfig>
 }
 
-export type OutputAction = 'copy' | 'copy-paste' | 'type-input'
+export type OutputAction = 'question' | 'copy' | 'copy-paste' | 'type-input'
 
 export type Processor<T> = ((state: T) => T | void) | T
 

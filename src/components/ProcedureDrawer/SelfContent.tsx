@@ -1,18 +1,6 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
-import { App as AntdApp, Button, Flex, Form, Modal, Select, Switch } from 'antd'
-import RegexInput from '@/components/base/RegexInput'
-import {
-  createOperator,
-  createSimpleOptions,
-  createUpdater,
-  createUtoolsFeature,
-  deleteStorage,
-  execute,
-  outputActionOptions,
-  setStorage,
-  use$self,
-  useUpdater
-} from '@/utils'
+import React, { useCallback, useMemo } from 'react'
+import { App as AntdApp, Button, Flex, Form, Modal, Select } from 'antd'
+import { createOperator, createSimpleOptions, createUpdater, deleteStorage, execute, outputActionOptions, setStorage, use$self } from '@/utils'
 import { DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons'
 import SortableList from '@/components/base/SortableList'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -20,9 +8,8 @@ import SortableListItem from '@/components/base/SortableListItem'
 import TextArea from 'antd/es/input/TextArea'
 import ObjectViewer from '@/components/base/ObjectViewer'
 import styled from 'styled-components'
-import { FuncInstance, OperatorConfig, ProcedureConfig, RegexConfig } from '@/types/base'
-import { useFuncConfig } from '@/components/context/StorageProvider'
-import { useTestString } from '@/components/context/TestStringProvider'
+import { FuncInstance, OperatorConfig, ProcedureConfig } from '@/types/base'
+import { useFuncConfig, useTestString } from '@/components/context/StorageProvider'
 
 type SelfContentProps = {
   procedure: ProcedureConfig
@@ -33,27 +20,12 @@ type SelfContentProps = {
 const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEditor }) => {
   const { modal } = AntdApp.useApp()
   const { selfFuncConfigMap, setSelfFuncConfigMap } = useFuncConfig()
-  const [featureEnabled, setFeatureEnabled] = useUpdater(false)
   const { testStr, setTestStr } = useTestString()
 
   const updateOperatorList = createUpdater<Array<OperatorConfig>>((value) => {
     procedure.operatorList = value instanceof Function ? value(procedure.operatorList) : value
     onChange(procedure)
   })
-
-  const updateFeatureState = useCallback(() => {
-    const enabled = !!(procedure.id && window.utools?.getFeatures([procedure.id])?.length)
-    setFeatureEnabled(enabled)
-  }, [procedure.id])
-
-  const onFeatureEnableChange = (e: boolean) => {
-    if (e) {
-      window.utools?.setFeature(createUtoolsFeature(procedure))
-    } else {
-      window.utools?.removeFeature(procedure.id)
-    }
-    updateFeatureState()
-  }
 
   /* 利用 useMemo 来重新挂载函数而不是 useEffect，因为 useEffect 总是在组件渲染之后才执行，此处需要在计算测试值之前进行更新挂载 */
   useMemo(() => use$self(selfFuncConfigMap), [selfFuncConfigMap])
@@ -70,77 +42,31 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
     }
   }, [testStr, procedure.operatorList, procedure.end, selfFuncConfigMap])
 
-  const onEditClick = (item: OperatorConfig) => {
-    onOpenEditor(Object.assign({ id: item.id }, selfFuncConfigMap[item.id]))
-  }
-
-  useEffect(() => {
-    updateFeatureState()
-  }, [updateFeatureState])
-
-  useEffect(() => {
-    if (procedure.id && featureEnabled) {
-      window.utools?.removeFeature(procedure.id)
-      window.utools?.setFeature(createUtoolsFeature(procedure))
-    }
-  }, [featureEnabled, procedure.id, procedure.name, procedure.desc, procedure.condition])
+  const onEditClick = useCallback(
+    (item: OperatorConfig) => {
+      onOpenEditor(Object.assign({ id: item.id }, selfFuncConfigMap[item.id]))
+    },
+    [onOpenEditor, selfFuncConfigMap]
+  )
 
   return (
-    <DrawerContent justify="space-between" align="flex-start" gap={16}>
-      <Flex vertical flex={'1 1 50%'} gap={6}>
+    <SelfContentStyle justify="space-between" align="flex-start" gap={16}>
+      <Flex className="sc-part" vertical gap={6}>
         <Form>
-          <Form.Item label="独立入口" tooltip={{ title: '通过独立入口触发流程时将会忽略匹配规则与排除规则' }}>
-            <Switch checked={featureEnabled} onChange={onFeatureEnableChange} />
+          <Form.Item label="输出模式" tooltip={{ title: '设置处理结果的输出模式，其中仅输入将以输入法原理键入文本。' }}>
+            <Select options={outputActionOptions} value={procedure.outputAction} onChange={(o) => onChange({ ...procedure, outputAction: o })} />
           </Form.Item>
-          {featureEnabled && (
-            <>
-              <Form.Item
-                label="展示条件"
-                tooltip={{
-                  title: (
-                    <RegexTooltipContent
-                      content={
-                        '展示独立入口的正则表达式，当指定文本满足条件后才会展示该独立入口。受限于 uTools 会忽略「任意匹配的正则」，若要匹配任意文本请留空。'
-                      }
-                      data={procedure.condition}
-                    />
-                  )
-                }}>
-                <RegexInput value={procedure.condition} onChange={(r) => onChange({ ...procedure, condition: r })} />
-              </Form.Item>
-              <Form.Item label="输出模式" tooltip={{ title: '通过独立入口触发时的输出模式' }}>
-                <Select
-                  options={outputActionOptions}
-                  value={procedure.outputAction}
-                  onChange={(o) => onChange({ ...procedure, outputAction: o })}
-                />
-              </Form.Item>
-            </>
-          )}
-          <Form.Item
-            label="匹配规则"
-            tooltip={{
-              title: (
-                <RegexTooltipContent
-                  content={'按流程列表顺序进行匹配的正则表达式，当匹配成功时将会触发本流程，后续流程将被忽略。'}
-                  data={procedure.match}
-                />
-              )
-            }}>
-            <RegexInput value={procedure.match} onChange={(r) => onChange({ ...procedure, match: r })} />
-          </Form.Item>
-          <Form.Item
-            label="排除规则"
-            tooltip={{ title: <RegexTooltipContent content={'排除的正则表达式，优先级高于匹配规则。'} data={procedure.exclude} /> }}>
-            <RegexInput value={procedure.exclude} onChange={(r) => onChange({ ...procedure, exclude: r })} />
-          </Form.Item>
-          <Form.Item label="终止游标" tooltip={{ title: '设置本流程的结束位置' }}>
+          <Form.Item label="终止游标" tooltip={{ title: '设置本流程的结束位置。' }}>
             <Select
               allowClear
               showSearch
-              value={procedure.end}
-              options={createSimpleOptions(procedure.operatorList.map((o) => o.id))}
-              onChange={(v) => onChange({ ...procedure, end: v })}
+              value={procedure.end || void 0}
+              options={createSimpleOptions(
+                procedure.operatorList,
+                (o) => o.id,
+                (o) => o.doc || o.id
+              )}
+              onChange={(v) => onChange({ ...procedure, end: v || '' })}
             />
           </Form.Item>
           <Form.Item label="函数列表" style={{ marginBottom: 0 }}>
@@ -206,47 +132,32 @@ const SelfContent: React.FC<SelfContentProps> = ({ procedure, onChange, onOpenEd
                   }}
                 />
               ]}>
-              <Button className="border-less" size="small" onClick={() => onEditClick(item)}>
+              <Button className="border-less btn-ellipsis" size="small" onClick={() => onEditClick(item)}>
                 {item.doc || item.id}
               </Button>
             </SortableListItem>
           )}
         />
       </Flex>
-      <Flex vertical flex={'1 1 50%'} gap={16} style={{ overflow: 'hidden' }}>
+      <Flex className="sc-part" vertical gap={16}>
         <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={testStr} onChange={(e) => setTestStr(e.target.value)} />
         <div className="obj-view-wrap">
           <ObjectViewer className="obj-viewer" data={testOutput} />
         </div>
         <TextArea autoSize={{ minRows: 3, maxRows: 6 }} value={String(testOutput)} readOnly />
       </Flex>
-    </DrawerContent>
+    </SelfContentStyle>
   )
 }
 
-const RegexTooltipContent: React.FC<{ content: React.ReactNode; data: RegexConfig }> = ({ content, data }) => {
-  const regexStr = useMemo(() => {
-    return `/${data.regex || ''}/${data.flags || ''}`
-  }, [data])
-
-  return (
-    <div>
-      <span>{content}</span>
-      <Button
-        type="primary"
-        size="small"
-        onClick={() => {
-          window.utools?.redirect('正则编辑器', { type: 'text', data: regexStr })
-        }}>
-        去编辑
-      </Button>
-    </div>
-  )
-}
-
-const DrawerContent = styled(Flex)`
+const SelfContentStyle = styled(Flex)`
   width: 100%;
   height: max-content;
+
+  .sc-part {
+    flex: 0 1 50%;
+    overflow: hidden;
+  }
 
   .ant-form-item {
     margin-bottom: 16px;
@@ -259,11 +170,22 @@ const DrawerContent = styled(Flex)`
 
   .ant-list {
     .ant-list-item {
-      padding: 6px 0 6px 12px;
+      padding: 0 0 0 6px;
     }
 
     .sortable-list-item-content {
+      padding: 6px;
       gap: 8px;
+    }
+  }
+
+  .btn-ellipsis {
+    overflow: hidden;
+
+    & > span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 

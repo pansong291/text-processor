@@ -1,4 +1,15 @@
-import { DeepPartial, FMCF, FuncConfig, FuncDeclaration, OperatorConfig, ProcedureConfig, Processor, StorageKey, StrMap } from '@/types/base'
+import {
+  DeepPartial,
+  FMCF,
+  FuncConfig,
+  FuncDeclaration,
+  OperatorConfig,
+  OutputAction,
+  ProcedureConfig,
+  Processor,
+  StorageKey,
+  StrMap
+} from '@/types/base'
 import { monaco } from '@/lib/monaco'
 import React, { useState } from 'react'
 
@@ -6,7 +17,8 @@ export const defaultElementType = 'string'
 
 export const defaultFunctionType = 'Function'
 
-export const outputActionOptions = [
+export const outputActionOptions: Array<{ label: string; value: OutputAction }> = [
+  { label: '询问我', value: 'question' },
   { label: '仅复制', value: 'copy' },
   { label: '复制粘贴', value: 'copy-paste' },
   { label: '仅输入', value: 'type-input' }
@@ -889,19 +901,7 @@ export function createProcedure(old?: ProcedureConfig): ProcedureConfig {
     id,
     name: old?.name || id,
     desc: old?.desc || '',
-    condition: {
-      regex: old?.condition?.regex || '',
-      flags: old?.condition?.flags || ''
-    },
-    outputAction: old?.outputAction || 'copy',
-    match: {
-      regex: old?.match?.regex || '',
-      flags: old?.match?.flags || ''
-    },
-    exclude: {
-      regex: old?.exclude?.regex || '',
-      flags: old?.exclude?.flags || ''
-    },
+    outputAction: old?.outputAction || 'question',
     end: old?.end || '',
     operatorList: old?.operatorList?.map?.((o) => createOperator(o)) || []
   }
@@ -971,8 +971,8 @@ export function execute(input: any, funcList: Array<string>, stop?: string) {
   return result.data
 }
 
-export function createSimpleOptions(values: Array<string>) {
-  return values.map((v) => ({ label: v, value: v }))
+export function createSimpleOptions<T>(arr: Array<T>, valueMapper: (t: T) => any, labelMapper?: (t: T) => string) {
+  return arr.map((e) => ({ label: (labelMapper || valueMapper)(e), value: valueMapper(e) }))
 }
 
 function mergeObjects<T>(obj: T, partial: DeepPartial<T>): T {
@@ -999,16 +999,4 @@ export function deepMerge<T>(obj: T, ...partials: DeepPartial<T>[]): T {
     obj = mergeObjects(obj, partial)
   }
   return obj
-}
-
-export function createUtoolsFeature(procedure: Pick<ProcedureConfig, 'id' | 'name' | 'desc' | 'condition'>): any {
-  const cmd = procedure.condition.regex
-    ? { type: 'regex', label: procedure.name, match: `/${procedure.condition.regex}/${procedure.condition.flags}` }
-    : { type: 'over', label: procedure.name, maxLength: 999999999 }
-  return {
-    code: procedure.id,
-    explain: procedure.desc || procedure.name,
-    platform: ['darwin', 'win32', 'linux'],
-    cmds: [cmd]
-  }
 }
